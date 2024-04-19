@@ -1,0 +1,1 @@
+Flink savepoints (if triggered) will appear here when running via docker compose

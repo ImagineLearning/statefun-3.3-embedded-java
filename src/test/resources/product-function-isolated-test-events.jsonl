@@ -1,0 +1,1 @@
+{"specversion":"1.0","id":"82c80663-4b0d-4b55-8d68-59a3a22c33bf","source":"http://example.com/product-service","type":"example.product","datacontenttype":"application/json","time":"2024-01-22T20:08:59.986526Z","data":{"id":"8f8339b5-6810-4c10-ae52-5262eb369f6e","title":"Widget","description":"Something you should definitely buy!","price":42,"availability":"IN_STOCK"}}

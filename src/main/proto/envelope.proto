@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package proto_message;
+
+option java_package = "com.example.stateful_functions.protobuf";
+option java_outer_classname = "ExampleProtobuf";
+
+message Envelope {
+  string payload = 1;
+  optional string partitionKey = 2;
+}

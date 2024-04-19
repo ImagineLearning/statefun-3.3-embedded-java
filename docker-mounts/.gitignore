@@ -1,0 +1,2 @@
+# Ignore checkpoint and savepoints
+[0-9a-f-]*
