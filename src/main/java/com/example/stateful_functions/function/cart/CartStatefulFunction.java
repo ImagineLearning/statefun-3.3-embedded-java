@@ -9,7 +9,7 @@ import com.example.stateful_functions.cloudevents.data.ProductAvailability;
 import com.example.stateful_functions.cloudevents.data.ProductEventDetails;
 import com.example.stateful_functions.cloudevents.data.internal.FunctionSubscriptionAction;
 import com.example.stateful_functions.function.AbstractStatefulFunction;
-import com.example.stateful_functions.function.StatefulFunctionTag;
+import com.example.stateful_functions.function.StatefunFunction;
 import com.example.stateful_functions.function.product.ProductStateAvailability;
 import com.example.stateful_functions.function.product.ProductStatefulFunction;
 import io.cloudevents.CloudEvent;
@@ -28,7 +28,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
-@StatefulFunctionTag
+@StatefunFunction
 public class CartStatefulFunction extends AbstractStatefulFunction {
 
     public static final String NAMESPACE = "example";

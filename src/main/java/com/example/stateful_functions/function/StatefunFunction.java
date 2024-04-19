@@ -15,5 +15,5 @@ import java.lang.annotation.Target;
 @Target({ ElementType.TYPE})
 @Component
 @Scope("prototype")
-public @interface StatefulFunctionTag {
+public @interface StatefunFunction {
 }

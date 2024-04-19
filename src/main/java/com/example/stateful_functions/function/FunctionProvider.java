@@ -38,7 +38,7 @@ public class FunctionProvider implements StatefulFunctionProvider, ApplicationCo
     @Override
     public void afterPropertiesSet() throws Exception {
         ClassPathScanningCandidateComponentProvider componentProvider = new ClassPathScanningCandidateComponentProvider(false);
-        componentProvider.addIncludeFilter(new AnnotationTypeFilter(StatefulFunctionTag.class));
+        componentProvider.addIncludeFilter(new AnnotationTypeFilter(StatefunFunction.class));
 
         for (BeanDefinition bean : componentProvider.findCandidateComponents(STATEFUN_BASE_PACKAGE)) {
 
