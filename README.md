@@ -105,7 +105,7 @@ The demo works using three docker compose "profiles" (phases).
 1. In the first phase, the flink cluster running our stateful function application is started, 
    along with localstack, and an aws-cli container that creates the ingress and egress Kinesis streams.
 2. The second phase runs an aws-cli container to send events to the ingress stream.  The events 
-   sent are from [product-function-isolated-test-events.jsonl](./src/test/resources/product-function-isolated-test-events.jsonl)
+   sent are from [product-cart-integration-test-events.jsonl](./src/test/resources/product-cart-integration-test-events.jsonl)
 3. The third phase runs an aws-cli container to fetch the events from the egress stream and output them to the console. 
 ```shell
 # Build this project and create the jar file
