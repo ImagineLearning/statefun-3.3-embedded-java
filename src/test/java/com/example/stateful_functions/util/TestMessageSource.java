@@ -1,6 +1,9 @@
 package com.example.stateful_functions.util;
 
+import com.example.stateful_functions.cloudevents.ExampleCloudEventJsonFormat;
 import com.example.stateful_functions.protobuf.ExampleProtobuf;
+import io.cloudevents.CloudEvent;
+import org.apache.commons.lang.StringUtils;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,33 +74,25 @@ public class TestMessageSource implements SourceFunction<ExampleProtobuf.Envelop
         try {
             for (ExampleProtobuf.Envelope envelope : envelopes) {
                 String event = envelope.getPayload();
-                if (event.startsWith("test.action:")) {
-                    LOG.info("{}", event);
-
-                    String[] actionFields =  event.split(":");
-                    if (actionFields.length != 3) {
-                        LOG.warn("Expected three fields delimited by colon in {}", event);
-                        continue;
-                    }
-                    String action = actionFields[1];
-
-                    switch (action) {
-                        case "delay":
-                            Thread.sleep(Long.parseLong(actionFields[2]));
-                            break;
-                        case "delay-between-events":
-                            delayBetweenEvents = Long.parseLong(actionFields[2]);
-                            break;
-                        case "comment":
-                            // Ignore
-                            break;
-                        default:
-                            LOG.warn("Unrecognized test action: {}", action);
-                    }
+                if (StringUtils.isEmpty(event)) {
+                    continue;
                 }
-                else {
-                    sourceContext.collect(envelope);
-                    Thread.sleep(delayBetweenEvents);
+                LOG.info("{}", event);
+                CloudEvent cloudEvent = ExampleCloudEventJsonFormat.CLOUD_EVENT_FORMAT.deserialize(event.getBytes(StandardCharsets.UTF_8));
+                switch (cloudEvent.getType()) {
+                    case "test.comment":
+                        // Ignore
+                        break;
+                    case "test.delay-between-events":
+                        delayBetweenEvents = Long.parseLong(new String(cloudEvent.getData().toBytes()));
+                        break;
+                    case "test.delay":
+                        Thread.sleep(Long.parseLong(new String(cloudEvent.getData().toBytes())));
+                        break;
+                    default:
+                        sourceContext.collect(envelope);
+                        Thread.sleep(delayBetweenEvents);
+                        break;
                 }
             }
 

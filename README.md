@@ -4,7 +4,20 @@
 
 This is an example of a Flink Stateful Functions project implemented in Java which uses the statefun embedded sdk.
 
-At the time of this writing the project serves to demonstrate testing in various ways:
+The purpose of this project is two-fold.  
+ 1. It demonstrates how Imagine Learning implements stateful functions, with only a few key differences, namely
+    * This project uses JSON-formatted [CloudEvents](https://github.com/cloudevents/spec?tab=readme-ov-file#cloudevents) 
+      because it avoids the messy deserialization required when processing 
+      [Caliper](https://www.imsglobal.org/spec/caliper/v1p2) events.
+    * This project egresses results as events to a separate stream, whereas at Imagine Learning we mostly send our 
+      results directly to OpenSearch and occasionally write events back to the ingress stream.
+ 2. It will serve as the basis for an evaluation of Stateful Functions running on 
+    [AWS Managed Flink](https://docs.aws.amazon.com/managed-flink/).  At the time of
+    this writing Imagine Learning runs stateful functions on self-managed Kubernetes clusters, but we are looking to
+    see if AWS Managed Flink is a viable alternative.
+
+
+This project demonstrates stateful functions under test in various ways:
   * build-time isolated function tests in which a single function is tested using events defined in a test resource file 
   * build-time integration tests in which several functions at once are tested using events from a test resource file
   * run-time execution in standalone job mode via docker compose
@@ -25,6 +38,7 @@ This is an opinionated project.  It uses...
     Each forwarder is small piece of code that routes one or more specific event types
     to a stateful function.  To start routing a new event type, just implement another Forwarder.
 
+## What this Stateful Functions appication does
 Example events and functions are provided which demonstrate notifying a shopping cart service of 
 product price and availability changes for items in users' carts.  The project assumes the 
 existence of upstream microservices that send Product events (name,price,availability) and
@@ -39,9 +53,9 @@ required to display product price/availability changes to the user.
 This project demonstrates the following event scenario:
   * The product service sends a product event to declare the product name, description, 
     price, and availability.
-  * The cart service sends a cart activity event when a product is added to the cart.
+  * The cart service sends a cart product event when a product is added to the cart.
   * Product events are routed to the product function
-  * Cart activity events are routed to the cart function
+  * Cart product events are routed to the cart function
   * The cart function subscribes to the product via internal messaging to the product function
   * Later, a product event is sent which indicates an increase of the price of the product
   * The product function sends the latest product info to the subscribers (i.e, the cart function)
