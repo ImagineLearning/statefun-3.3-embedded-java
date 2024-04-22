@@ -65,7 +65,7 @@ This project demonstrates the following event scenario:
     or show a price change alert to the user when they next visit their cart, etc.
 
 Note that the product service and shopping cart service are not part of this example project.
-Examples inbound events can be found in the [src/test/resources](./src/test/resources) directory.
+Example inbound events can be found in the [src/test/resources](./src/test/resources) directory.
 
 ![A diagramm showing the event flow for this example project](example-diagram.png "Illustration of the event flow for this example project")
 
