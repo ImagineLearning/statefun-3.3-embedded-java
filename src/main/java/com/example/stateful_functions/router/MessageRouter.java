@@ -29,6 +29,9 @@ public final class MessageRouter implements Router<ExampleProtobuf.Envelope> {
     public void route(ExampleProtobuf.Envelope envelope, Downstream<ExampleProtobuf.Envelope> downstream) {
 
         CloudEvent cloudEvent = cloudEventJsonFormat.deserialize(envelope.getPayload());
+        if (cloudEvent == null) {
+            return;
+        }
         for (Forwarder forwarder : forwarders) {
             if (forwarder.accept(cloudEvent)) {
                 forwarder.forward(cloudEvent, downstream);
