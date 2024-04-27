@@ -91,43 +91,81 @@ Users running on Apple silicon should ensure that the file ~/.m2/settings.xml ex
 </settings>
 ```
 
-To compile the code and run the tests using the included Maven wrapper script...
+
+To compile the code and run the tests using the included Maven wrapper script, first see below about
+building and installing Apache Flink Stateful Functions compatible with Flink 1.18, then do this:
 ```
 ./mvnw test
 ```
 
-## Running the project via Docker Compose
+## Running the project via AWS Managed Flink
 
-Follow the instructions below to run the project via Docker Compose.  Note that Kinesis support is provided
-by a [localstack](https://www.localstack.cloud/) container.
+### Version compatibility between AWS Managed Flink and Stateful Functions
 
-The demo works using three docker compose "profiles" (phases).
-1. In the first phase, the flink cluster running our stateful function application is started, 
-   along with localstack, and an aws-cli container that creates the ingress and egress Kinesis streams.
-2. The second phase runs an aws-cli container to send events to the ingress stream.  The events 
-   sent are from [product-cart-integration-test-events.jsonl](./src/test/resources/product-cart-integration-test-events.jsonl)
-3. The third phase runs an aws-cli container to fetch the events from the egress stream and output them to the console. 
+The latest release of Apache Flink Stateful Functions is 3.3, but its compiled and built 
+to run with Flink 1.16.2.  AWS Managed Flink supports Flink versions 1.15 and 1.18.  So the first
+step towards running via AWS Managed Flink is to create a version of the stateful functions library 
+compatible with Flink 1.18.  The required changes are provided here: 
+https://github.com/kellinwood/flink-statefun/pull/1/files.  
+Clone that repo, checkout the `release-3.3-1.18`
+branch, and build/install it locally via `mvn install`
+
+### Build and package this project
 ```shell
-# Build this project and create the jar file
-./mvnw package
+mvn package
+```
 
-# Build the flink docker images, and re-run these if code changes have been made
-docker compose build jobmanager
-docker compose build taskmanager
+### Create an S3 bucket and upload this project's JAR file
 
-# The statefun profile starts localstack, creates the kinesis streams, and starts the Flink jobmanager and taskmanager
-docker compose --profile statefun up -d
+To create the bucket, create a CloudFormation stack named `managed-flink-code-bucket` as defined [here](./managed-flink-poc-bucket.yaml),
+and after that finishes, use the AWS CLI to upload the jar file:
 
-# Optionally connect the IDE debugger to the taskmanager on localhost port 5066 at this point
+```shell
+export AWS_ACCOUNT_ID=516535517513 # Imagine Learning Sandbox account
+aws s3 cp target/my-stateful-functions-embedded-java-3.3.0.jar \
+          s3://managed-flink-code-bucket-codebucket-${AWS_ACCOUNT_ID}/
+```
 
-# Send some events
-docker compose --profile send-events up
+### Create the Kinesis streams, Managed Flink application, and related AWS Resources
 
-# Get and display the events from the egress stream
-# Note that some VPNs (i.e., ZScaler) can cause failures with 'yum'.  The workaround is to disconnect from the VPN first.
-docker compose --profile get-egress-events up
+Create a CloudFormation stack named `managed-flink-poc` as defined by the templates [here](./managed-flink-poc.yaml)
 
-# Shut everything down
-docker compose --profile all down
+### Configure the Managed Flink application using the AWS Web Console
+
+Visit `Managed Apache Flink` in the AWS web console and click through to the Flink application 
+created via the CF stack above.  Note that the application is in the "ready" state and is not 
+running yet.  
+
+* Click the "Configure" button on the Flink application's detail page.
+* Scoll down to the "Logging and monitoring" section.
+* Click to turn on logging
+* Click to use a custom log stream
+* Click "Browse" to find the log stream
+* Navigate through the log group named "managed-flink-poc-log-group..." and click the "Choose" button next to the 
+  "managed-flink-poc-log-stream..." entry
+* Under "Monitoring metrics level with CloudWatch" select "Operator"
+* Scroll down to the bottom and click "Save changes"
+* Once the changes have finished being saved, click the "Run" button to start the application.
+
+Note that in many CloudFormation examples on how to deploy a Managed Flink application, the steps above 
+are performed via API calls made by in-line lambdas defined in the CF template.  This is future work
+for this example/demo project.
+
+### Monitor the CloudWatch logging output
+
+```shell
+./poc-tail-logs.sh
+```
+This script will show all the log entries from the start of application launch, and will
+wait for new entries to arrive and display them too.  The script will resume from where it 
+left off if shut down via Ctrl-C.  To start from scratch, remove the `.cwlogs` directory.
+### Send sample events to the ingress stream
+```shell
+./poc-send-events.sh
+```
+
+### Get and display the events published to the egress stream
+```shell
+./poc-get-events.sh
 ```
 

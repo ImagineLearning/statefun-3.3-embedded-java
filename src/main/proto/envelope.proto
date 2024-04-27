@@ -7,5 +7,5 @@ option java_outer_classname = "ExampleProtobuf";
 
 message Envelope {
   string payload = 1;
-  optional string partitionKey = 2;
+  string partitionKey = 2;
 }

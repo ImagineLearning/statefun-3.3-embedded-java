@@ -1,0 +1,34 @@
+# A CloudFormation stack for the S3 bucket to which the flink stateful functions job JAR file will be uploaded.
+# Once this bucket has been created, upload the JAR file, then create the managed-flink-poc stack.
+Resources:
+  CodeBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-codebucket-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: alias/aws/s3
+  CodeBucketBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CodeBucket
+      PolicyDocument:
+        Id: RequireEncryptionInTransit
+        Version: '2012-10-17'
+        Statement:
+          - Principal: '*'
+            Action: '*'
+            Effect: Deny
+            Resource:
+              - !GetAtt CodeBucket.Arn
+              - !Sub ${CodeBucket.Arn}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: 'false'
+Outputs:
+  ManagedFlinkCodeBucketArn:
+    Value: !GetAtt CodeBucket.Arn
+    Export:
+      Name: ManagedFlinkCodeBucketArn # Exported for use by the stack defined in managed-flink-poc.yaml
