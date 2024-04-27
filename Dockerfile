@@ -2,7 +2,7 @@
 # diagnostic tools. This multistage build will overwrite the JRE with the JDK from openjdk:11
 # See https://docs.docker.com/develop/develop-images/multistage-build/
 FROM openjdk:11 as jdk_image
-FROM flink:1.16.2-java11
+FROM flink:1.18.1-java11
 
 # Copy the JDK from the jdk_image
 COPY --from=jdk_image /usr/local/openjdk-11 /usr/local/openjdk-11
@@ -43,7 +43,7 @@ RUN mkdir -p $FLINK_JOB_DIR
 COPY target/my-stateful-functions-embedded-java-3.3.0.jar ${FLINK_JOB_DIR}/flink-job.jar
 RUN chown -R flink:flink ${FLINK_JOB_DIR}/
 
-ENV PLUGIN_NAME flink-s3-fs-hadoop-1.16.2
+ENV PLUGIN_NAME flink-s3-fs-hadoop-1.18.1
 RUN mkdir -p "${FLINK_HOME}/plugins/${PLUGIN_NAME}"
 RUN ln -fs "${FLINK_HOME}/opt/${PLUGIN_NAME}.jar" "${FLINK_HOME}/plugins/${PLUGIN_NAME}"
 

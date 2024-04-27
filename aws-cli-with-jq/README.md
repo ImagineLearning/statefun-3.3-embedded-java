@@ -1,0 +1,1 @@
+Build an aws-cli container that also has [jq](https://jqlang.github.io/jq/) installed.
