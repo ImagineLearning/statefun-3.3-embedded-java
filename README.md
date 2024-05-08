@@ -123,33 +123,15 @@ and after that finishes, use the AWS CLI to upload the jar file:
 ```shell
 export AWS_ACCOUNT_ID=516535517513 # Imagine Learning Sandbox account
 aws s3 cp target/my-stateful-functions-embedded-java-3.3.0.jar \
-          s3://managed-flink-code-bucket-codebucket-${AWS_ACCOUNT_ID}/
+          s3://managed-flink-poc-bucket-codebucket-${AWS_ACCOUNT_ID}/
 ```
 
 ### Create the Kinesis streams, Managed Flink application, and related AWS Resources
 
-Create a CloudFormation stack named `managed-flink-poc` as defined by the templates [here](./managed-flink-poc.yaml)
+Create a CloudFormation stack named `managed-flink-poc` as defined by the CloudFormation templates [here](./managed-flink-poc.yaml).
+This stack includes a custom resource lambda that programmatically configures logging when the Flink application is created,
+and transitions the application from the Ready to Running state.
 
-### Configure the Managed Flink application using the AWS Web Console
-
-Visit `Managed Apache Flink` in the AWS web console and click through to the Flink application 
-created via the CF stack above.  Note that the application is in the "ready" state and is not 
-running yet.  
-
-* Click the "Configure" button on the Flink application's detail page.
-* Scoll down to the "Logging and monitoring" section.
-* Click to turn on logging
-* Click to use a custom log stream
-* Click "Browse" to find the log stream
-* Navigate through the log group named "managed-flink-poc-log-group..." and click the "Choose" button next to the 
-  "managed-flink-poc-log-stream..." entry
-* Under "Monitoring metrics level with CloudWatch" select "Operator"
-* Scroll down to the bottom and click "Save changes"
-* Once the changes have finished being saved, click the "Run" button to start the application.
-
-Note that in many CloudFormation examples on how to deploy a Managed Flink application, the steps above 
-are performed via API calls made by in-line lambdas defined in the CF template.  This is future work
-for this example/demo project.
 
 ### Monitor the CloudWatch logging output
 
