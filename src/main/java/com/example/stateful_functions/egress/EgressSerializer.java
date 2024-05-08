@@ -8,6 +8,8 @@ import org.apache.flink.statefun.sdk.kinesis.egress.KinesisEgressSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 
@@ -19,8 +21,8 @@ public class EgressSerializer implements KinesisEgressSerializer<ExampleProtobuf
     public EgressRecord serialize(ExampleProtobuf.Envelope envelope) {
         try {
             String payload = envelope.getPayload();
-            String partitionKey = envelope.hasPartitionKey() ? envelope.getPartitionKey() :
-                    new String(Md5Utils.computeMD5Hash(payload.getBytes(UTF_8)));
+            String partitionKey = Optional.ofNullable(envelope.getPartitionKey())
+                    .orElse(new String(Md5Utils.computeMD5Hash(payload.getBytes(UTF_8))));
             return EgressRecord.newBuilder()
                     .withPartitionKey(partitionKey)
                     .withData(payload.getBytes(UTF_8))

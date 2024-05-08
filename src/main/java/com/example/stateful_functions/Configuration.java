@@ -1,5 +1,6 @@
 package com.example.stateful_functions;
 
+import com.amazonaws.services.kinesisanalytics.runtime.KinesisAnalyticsRuntime;
 import org.apache.flink.statefun.sdk.kinesis.auth.AwsRegion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Field;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 
 public class Configuration {
@@ -57,6 +60,17 @@ public class Configuration {
 
         properties.putAll(env);
 
+        // If deployed in AWS Managed Flink, then get our config from
+        // KinesisAnalyticsRuntime.getApplicationProperties().get("StatefunApplicationProperties")
+        try {
+            Optional.ofNullable(KinesisAnalyticsRuntime.getApplicationProperties())
+                    .map(ap -> ap.get("StatefunApplicationProperties"))
+                    .filter(Objects::nonNull)
+                    .ifPresent(ap -> properties.putAll(ap));
+        }
+        catch (Exception x) {
+            LOG.warn(x.getMessage(), x);
+        }
         return properties;
     }
 

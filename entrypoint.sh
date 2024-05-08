@@ -2,7 +2,7 @@
 
 set -e
 
-export ENABLE_BUILT_IN_PLUGINS=flink-s3-fs-hadoop-1.16.2.jar
+export ENABLE_BUILT_IN_PLUGINS=flink-s3-fs-hadoop-1.18.1.jar
 
 # fix for rocksb memory fragmentation issue
 export LD_PRELOAD=$LD_PRELOAD:/usr/lib/x86_64-linux-gnu/libjemalloc.so

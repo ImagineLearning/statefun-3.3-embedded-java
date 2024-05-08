@@ -1,0 +1,238 @@
+# A CloudFormation stack containing all resources except for the S3 bucket containing the statefun application JAR.
+Description: "Stack to run Managed Flink proof-of-concept.  Contact: Ken Ellinwood"
+Resources:
+  ManagedFlinkIngressStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      ShardCount: 1
+      StreamEncryption:
+        EncryptionType: KMS
+        KeyId: alias/aws/kinesis
+      StreamModeDetails:
+        StreamMode: PROVISIONED
+  ManagedFlinkEgressStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      ShardCount: 1
+      StreamEncryption:
+        EncryptionType: KMS
+        KeyId: alias/aws/kinesis
+      StreamModeDetails:
+        StreamMode: PROVISIONED
+  ManagedFlinkLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      LogGroupName: 
+        !Sub ${AWS::StackName}-log-group-${AWS::AccountId}
+      RetentionInDays: 7
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+  ManagedFlinkLogStream:
+    Type: 'AWS::Logs::LogStream'
+    Properties:
+      LogGroupName: 
+        Ref: ManagedFlinkLogGroup
+      LogStreamName:
+        !Sub ${AWS::StackName}-log-stream-${AWS::AccountId}
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+  ManagedFlinkIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: 
+                - kinesisanalytics.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonKinesisFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/CloudWatchFullAccess
+      Path: /
+      Policies:
+        - PolicyDocument:
+            Statement:
+              - Action:
+                  - 'kinesis:DescribeStream'
+                  - 'kinesis:GetRecords'
+                  - 'kinesis:GetShardIterator'
+                  - 'kinesis:ListShards'
+                Effect: Allow
+                Resource:
+                  - 'Fn::GetAtt':
+                    - ManagedFlinkIngressStream
+                    - Arn
+                  - 'Fn::GetAtt':
+                    - ManagedFlinkEgressStream
+                    - Arn                    
+            Version: '2012-10-17'
+          PolicyName: AccessKDSPolicy
+        - PolicyDocument:
+            Statement:
+              - Action:
+                  - 'logs:DescribeLogGroups'
+                  - 'logs:DescribeLogStreams'
+                  - 'logs:PutLogEvents'
+                Effect: Allow
+                Resource:
+                  'Fn::GetAtt':
+                    - ManagedFlinkLogGroup
+                    - Arn
+            Version: '2012-10-17'
+          PolicyName: AccessCWLogsPolicy
+        - PolicyDocument:
+            Statement:
+              - Action: 'cloudwatch:PutMetricData'
+                Effect: Allow
+                Resource: '*'
+            Version: '2012-10-17'
+          PolicyName: AccessCWMetricsPolicy          
+  ManagedFlinkApplication:
+    Type: AWS::KinesisAnalyticsV2::Application
+    Properties:
+      ApplicationName: 'ManagedFlinkPOCApplication'
+      ApplicationDescription: 'Managed Flink POC Application'
+      RuntimeEnvironment: 'FLINK-1_18'
+      ServiceExecutionRole: !GetAtt ManagedFlinkIAMRole.Arn
+      ApplicationConfiguration:
+        EnvironmentProperties:
+          PropertyGroups:
+            - PropertyGroupId: 'StatefunApplicationProperties'
+              PropertyMap:
+                EVENTS_INGRESS_STREAM_DEFAULT: !Ref ManagedFlinkIngressStream
+                EVENTS_EGRESS_STREAM_DEFAULT: !Ref ManagedFlinkEgressStream
+                AWS_REGION: !Ref AWS::Region
+        FlinkApplicationConfiguration:
+          CheckpointConfiguration:
+            ConfigurationType: 'CUSTOM'
+            CheckpointingEnabled: True
+            CheckpointInterval: 900000 # Every fifteen minutes
+            MinPauseBetweenCheckpoints: 500
+          MonitoringConfiguration:
+            ConfigurationType: 'CUSTOM'
+            MetricsLevel: 'APPLICATION'
+            LogLevel: 'INFO'
+          ParallelismConfiguration:
+            ConfigurationType: 'CUSTOM'
+            Parallelism: 1
+            ParallelismPerKPU: 1
+            AutoScalingEnabled: True
+        ApplicationSnapshotConfiguration:
+          SnapshotsEnabled: True
+        ApplicationCodeConfiguration:
+          CodeContent:
+            S3ContentLocation:
+              BucketARN: !ImportValue ManagedFlinkCodeBucketArn # Created and exported by the stack defined in managed-flink-poc-bucket.yaml
+              FileKey: "my-stateful-functions-embedded-java-3.3.0.jar"
+          CodeContentType: 'ZIPFILE'
+  ManagedFlinkCustomResource:
+    Description: Invokes ManagedFlinkCRLambda to update and start the Flink application via API calls
+    Type: AWS::CloudFormation::CustomResource
+    DependsOn: ManagedFlinkCRLambda
+    Version: "1.0"
+    Properties:
+      ServiceToken: !GetAtt ManagedFlinkCRLambda.Arn
+      Region: !Ref AWS::Region
+      ApplicationName: !Ref ManagedFlinkApplication
+      # LogStream ARN format: arn:aws:logs:REGION:ACCOUNT_NUMBER:log-group:LOG_GROUP_NAME:log-stream:LOG_STREAM_NAME
+      # We get most of this from the LogGroup ARN, then remove the trailing "*" and append "log-stream:LOG_STREAM_NAME"
+      LogStreamArn: !Join [ "", [ !Select [ 0, !Split [ "*", !GetAtt ManagedFlinkLogGroup.Arn ] ], "log-stream:", !Ref ManagedFlinkLogStream ] ]
+  ManagedFlinkCRLambdaRole:
+    Type: AWS::IAM::Role
+    DependsOn:
+      - ManagedFlinkApplication
+      - ManagedFlinkLogStream
+    Properties:
+      Description: A role for the custom resource lambda to use while interacting with an application.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonKinesisAnalyticsFullAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+      Path: /
+  ManagedFlinkCRLambda:
+    Type: AWS::Lambda::Function
+    DependsOn: ManagedFlinkCRLambdaRole
+    Properties:
+      Description: Configures logging and starts the Flink application
+      Runtime: python3.8
+      Role: !GetAtt ManagedFlinkCRLambdaRole.Arn
+      Handler: index.lambda_handler
+      Timeout: 30
+      Code:
+        ZipFile: |
+          import logging
+          import cfnresponse
+          import boto3
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          def lambda_handler(event, context):
+            logger.info('Incoming CFN event {}'.format(event))
+
+            try:
+              event_type = event['RequestType']
+              resource_props = event['ResourceProperties']
+              application_name = resource_props['ApplicationName']
+
+              # Ignore events other than Create or Update,
+              if event_type not in ['Create', 'Update']:
+                cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                return
+
+              # kinesisanalyticsv2 API reference: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kinesisanalyticsv2.html
+              client_kda = boto3.client('kinesisanalyticsv2', region_name=event['ResourceProperties']['Region'])
+
+              describe_response = client_kda.describe_application(ApplicationName=application_name)
+              logger.info(f'describe_application response: {describe_response}')
+
+              if event_type == 'Create':
+                # Add cloudwatch logging option
+                log_stream_arn = resource_props['LogStreamArn']
+                conditional_token = describe_response['ApplicationDetail']['ConditionalToken']
+                response = client_kda.add_application_cloud_watch_logging_option(
+                  ApplicationName = application_name,
+                  CloudWatchLoggingOption = {
+                      'LogStreamARN': log_stream_arn
+                  },
+                  ConditionalToken = conditional_token
+                )
+                logger.info(f'add_application_cloud_watch_logging_option response: {response}')
+
+              # get application status.
+              application_status = describe_response['ApplicationDetail']['ApplicationStatus']
+
+              # an application can be started from 'READY' status only.
+              if application_status != 'READY':
+                logger.info('No-op for Application {} because ApplicationStatus {} is filtered'.format(application_name, application_status))
+                cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+
+                return
+
+              # create RunConfiguration.
+              run_configuration = {
+                'ApplicationRestoreConfiguration': {
+                  'ApplicationRestoreType': 'RESTORE_FROM_LATEST_SNAPSHOT',
+                }
+              }
+
+              logger.info('RunConfiguration for Application {}: {}'.format(application_name, run_configuration))
+
+              # this call doesn't wait for an application to transfer to 'RUNNING' state.
+              client_kda.start_application(ApplicationName=application_name, RunConfiguration=run_configuration)
+              logger.info('Started Application: {}'.format(application_name))
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+            except Exception as err:
+              logger.error(err)
+              cfnresponse.send(event,context, cfnresponse.FAILED, {"Data": str(err)})
