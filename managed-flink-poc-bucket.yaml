@@ -1,5 +1,6 @@
 # A CloudFormation stack for the S3 bucket to which the flink stateful functions job JAR file will be uploaded.
 # Once this bucket has been created, upload the JAR file, then create the managed-flink-poc stack.
+Description: "Bucket and policy to hold statefun JAR file for Managed Flink proof-of-concept.  Contact: Ken Ellinwood"
 Resources:
   CodeBucket:
     Type: AWS::S3::Bucket
