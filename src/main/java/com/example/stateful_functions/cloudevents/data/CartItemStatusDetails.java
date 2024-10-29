@@ -8,6 +8,7 @@ public class CartItemStatusDetails {
     private int quantity;
     private BigDecimal currentPrice;
     private ProductAvailability availability;
+    private String version; // version of the app from application.properties
 
     public CartItemStatusDetails() {
     }
@@ -18,6 +19,7 @@ public class CartItemStatusDetails {
         quantity = builder.quantity;
         currentPrice = builder.currentPrice;
         availability = builder.availability;
+        version = builder.version;
     }
 
     public String getProductId() {
@@ -40,6 +42,9 @@ public class CartItemStatusDetails {
         return availability;
     }
 
+    public String getVersion() {
+        return version;
+    }
 
     public static final class Builder {
         private String productId;
@@ -47,6 +52,7 @@ public class CartItemStatusDetails {
         private int quantity;
         private BigDecimal currentPrice;
         private ProductAvailability availability;
+        private String version;
 
         public Builder() {
         }
@@ -73,6 +79,11 @@ public class CartItemStatusDetails {
 
         public Builder availability(ProductAvailability val) {
             availability = val;
+            return this;
+        }
+
+        public Builder version(String val) {
+            version = val;
             return this;
         }
 

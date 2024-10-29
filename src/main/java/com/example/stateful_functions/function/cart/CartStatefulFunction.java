@@ -1,6 +1,7 @@
 package com.example.stateful_functions.function.cart;
 
 
+import com.example.stateful_functions.Configuration;
 import com.example.stateful_functions.cloudevents.ExampleCloudEventType;
 import com.example.stateful_functions.cloudevents.data.CartItemStatusDetails;
 import com.example.stateful_functions.cloudevents.data.CartProductEventDetails;
@@ -158,6 +159,7 @@ public class CartStatefulFunction extends AbstractStatefulFunction {
                             .originPrice(itemStateDetails.getOriginPrice())
                             .currentPrice(itemStateDetails.getPrice())
                             .availability(ProductAvailability.valueOf(itemStateDetails.getAvailability().name()))
+                            .version(Configuration.APP_VERSION)
                             .build()
             );
 

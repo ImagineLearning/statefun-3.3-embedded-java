@@ -1,6 +1,7 @@
 package com.example.stateful_functions;
 
 import com.amazonaws.services.kinesisanalytics.runtime.KinesisAnalyticsRuntime;
+import org.apache.flink.kinesis.shaded.com.amazonaws.services.dynamodbv2.xspec.S;
 import org.apache.flink.statefun.sdk.kinesis.auth.AwsRegion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ public class Configuration {
     public static boolean USE_ENHANCED_FANOUT = properties.getOrDefault("USE_ENHANCED_FANOUT", "true").equals("true");
     public static String ENHANCED_FANOUT_NAME = properties.getOrDefault("ENHANCED_FANOUT_NAME", "example-enhanced-fanout").toString();
 
+    public static String APP_VERSION = properties.getOrDefault("app.version", "0.1").toString();
 
     public static final AwsRegion getAwsRegion() {
 
@@ -52,13 +54,18 @@ public class Configuration {
         }
     }
 
-    private static final Properties getProperties() {
+    private static Properties getProperties() {
         // System.getProperties + System.getenv()
 
-        Properties properties = System.getProperties();
-        Map<String, String> env = System.getenv();
+        Properties properties = new Properties();
+        try {
+            properties.load(Configuration.class.getResourceAsStream("/application.properties"));
+        } catch (Exception x) {
+            LOG.warn(x.getMessage(), x);
+        }
 
-        properties.putAll(env);
+        properties.putAll(System.getProperties());
+        properties.putAll(System.getenv());
 
         // If deployed in AWS Managed Flink, then get our config from
         // KinesisAnalyticsRuntime.getApplicationProperties().get("StatefunApplicationProperties")

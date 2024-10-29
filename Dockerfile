@@ -1,14 +1,14 @@
-# The parent Flink image (flink:1.13.2-scala_2.12-java11) only contains the JRE (openjdk:11-jre), and it is missing key
+# The parent Flink image (flink:1.18.1-java11) only contains the JRE (openjdk:11-jre), and it is missing key
 # diagnostic tools. This multistage build will overwrite the JRE with the JDK from openjdk:11
 # See https://docs.docker.com/develop/develop-images/multistage-build/
-FROM openjdk:11 as jdk_image
-FROM flink:1.16.2-java11
+FROM --platform=linux/amd64 openjdk:11 AS jdk_image
+FROM --platform=linux/amd64 flink:1.18.1-java11
 
 # Copy the JDK from the jdk_image
-COPY --from=jdk_image /usr/local/openjdk-11 /usr/local/openjdk-11
+COPY --from=jdk_image /usr/local/openjdk-11 /opt/java/openjdk/
 
-RUN sed -i -e 's/^.*networkaddress.cache.ttl=.*$/networkaddress.cache.ttl=30/g' /usr/local/openjdk-11/conf/security/java.security
-RUN sed -i -e 's/^.*networkaddress.cache.negative.ttl=.*$/networkaddress.cache.negative.ttl=10/g' /usr/local/openjdk-11/conf/security/java.security
+RUN sed -i -e 's/^.*networkaddress.cache.ttl=.*$/networkaddress.cache.ttl=30/g' /opt/java/openjdk/conf/security/java.security
+RUN sed -i -e 's/^.*networkaddress.cache.negative.ttl=.*$/networkaddress.cache.negative.ttl=10/g' /opt/java/openjdk/conf/security/java.security
 
 # The 2019 AWS rds root cert
 ADD rds-ca-2019-root.pem /etc/rds-ca-2019-root.pem
@@ -43,7 +43,7 @@ RUN mkdir -p $FLINK_JOB_DIR
 COPY target/my-stateful-functions-embedded-java-3.3.0.jar ${FLINK_JOB_DIR}/flink-job.jar
 RUN chown -R flink:flink ${FLINK_JOB_DIR}/
 
-ENV PLUGIN_NAME flink-s3-fs-hadoop-1.16.2
+ENV PLUGIN_NAME flink-s3-fs-hadoop-1.18.1
 RUN mkdir -p "${FLINK_HOME}/plugins/${PLUGIN_NAME}"
 RUN ln -fs "${FLINK_HOME}/opt/${PLUGIN_NAME}.jar" "${FLINK_HOME}/plugins/${PLUGIN_NAME}"
 

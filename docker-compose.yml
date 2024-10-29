@@ -1,6 +1,7 @@
 services:
   localstack:
     image: localstack/localstack:3.0.2
+    platform: linux/amd64
     profiles: [kinesis,statefun,all]
     ports:
       - "4566:4566"
@@ -18,6 +19,7 @@ services:
 
   create-streams:
     image: amazon/aws-cli
+    platform: linux/amd64
     profiles: [kinesis,statefun,all]
     depends_on:
       - localstack
@@ -41,6 +43,7 @@ services:
       "
 
   jobmanager:
+    platform: linux/amd64
     profiles: [statefun,all]
     depends_on:
       - create-streams
@@ -73,6 +76,7 @@ services:
       - ./docker-mounts/savepoints:/savepoints
 
   taskmanager:
+    platform: linux/amd64
     profiles: [statefun,all]
     depends_on:
       - jobmanager
@@ -104,6 +108,7 @@ services:
 
   send-events:
     image: amazon/aws-cli
+    platform: linux/amd64
     profiles: [send-events,all]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -126,6 +131,7 @@ services:
 
   get-egress-events:
     image: amazon/aws-cli
+    platform: linux/amd64
     profiles: [get-egress-events,all]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
