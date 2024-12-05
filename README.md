@@ -321,7 +321,6 @@ Wait until the Flink application is in the 'Running' state, then execute the fol
 ./poc-get-events.sh
 ```
 
-```
 #### Cleanup
 
 ```
