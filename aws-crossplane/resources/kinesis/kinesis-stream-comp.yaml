@@ -1,0 +1,71 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: kinesisstreams.kellinwood.com
+spec:
+  compositeTypeRef:
+    apiVersion: kellinwood.com/v1alpha1
+    kind: XKinesisStream
+  mode: Pipeline
+  pipeline:
+  - step: patch-and-transform
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - name: kinesis-stream
+        base:
+          apiVersion: kinesis.aws.upbound.io/v1beta1
+          kind: Stream
+          metadata:
+            annotations:
+              meta.upbound.io/example-id: kinesis/v1beta1/stream
+            name: example
+            labels:
+              foo: bar
+          spec:
+            forProvider:
+              region: us-east-2
+              retentionPeriod: 24
+              shardCount: 1
+              shardLevelMetrics:
+                - IncomingBytes
+                - OutgoingBytes
+              streamModeDetails:
+                - streamMode: PROVISIONED
+              tags:
+                createdBy: unknown-person
+                purpose: unknown-purpose
+            providerConfigRef:
+              name: provider-aws
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.name
+            toFieldPath: metadata.name
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.region
+            toFieldPath: spec.forProvider.region
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.retentionPeriod
+            toFieldPath: spec.forProvider.retentionPeriod
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.streamMode
+            toFieldPath: spec.forProvider.streamModeDetails[0].streamMode
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.shardCount
+            toFieldPath: spec.forProvider.shardCount
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.tags.createdBy
+            toFieldPath: spec.forProvider.tags.createdBy
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.tags.purpose
+            toFieldPath: spec.forProvider.tags.purpose
+          - type: ToCompositeFieldPath
+            fromFieldPath: status.atProvider.arn
+            toFieldPath: status.streamArn
+          - type: ToCompositeFieldPath
+            fromFieldPath: status.atProvider.id
+            toFieldPath: status.streamName                   

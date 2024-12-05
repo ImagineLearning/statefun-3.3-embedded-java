@@ -1,0 +1,64 @@
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-s3
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-s3:v1.17.0
+  controllerConfigRef:
+    name: aws-config
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-iam
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-iam:v1.17.0
+  controllerConfigRef:
+    name: aws-config
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-kinesis
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-kinesis:v1.17.0
+  controllerConfigRef:
+    name: aws-config
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-kinesisanalyticsv2
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-kinesisanalyticsv2:v1.17.0
+  controllerConfigRef:
+    name: aws-config
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-cloudwatchlogs
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-cloudwatchlogs:v1.17.0
+  controllerConfigRef:
+    name: aws-config
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-cloudwatchevents
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-cloudwatchevents:v1.17.0
+  controllerConfigRef:
+    name: aws-config
+---    
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-lambda
+  namespace: crossplane-system
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-lambda:v1.17.0
+  controllerConfigRef:
+    name: aws-config

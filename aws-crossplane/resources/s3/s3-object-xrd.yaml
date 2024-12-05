@@ -1,0 +1,43 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xs3objects.kellinwood.com
+spec:
+  group: kellinwood.com
+  names:
+    kind: XS3Object
+    plural: xs3objects
+  claimNames:
+    kind: S3Object
+    plural: s3objects
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          properties:
+            spec:
+              properties:
+                resourceConfig:
+                  properties:
+                    region:
+                      type: string
+                    bucket:
+                      type: string
+                    key:
+                      type: string
+                    content:
+                      type: string
+                    contentBase64:
+                      type: string
+                  type: object
+              type: object
+            status:
+              properties:
+                objectName:
+                  type: string
+                objectArn:
+                  type: string
+              type: object
+          type: object

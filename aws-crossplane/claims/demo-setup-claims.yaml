@@ -1,0 +1,41 @@
+---
+apiVersion: kellinwood.com/v1alpha1
+kind: S3Bucket
+metadata:
+  name: flink-demo-bucket
+  namespace: default
+spec:
+  resourceConfig:
+    region: us-east-2
+---
+apiVersion: kellinwood.com/v1alpha1
+kind: KinesisStream
+metadata:
+  name: flink-demo-ingress
+  namespace: default
+spec:
+  resourceConfig:
+    region: us-east-2
+    name: flink-demo-ingress
+    streamMode: PROVISIONED
+    shardCount: 1
+    retentionPeriod: 26
+    tags:
+      createdBy: ken.ellinwood@imaginelearning.com
+      purpose: statefun-ingress
+---
+apiVersion: kellinwood.com/v1alpha1
+kind: KinesisStream
+metadata:
+  name: flink-demo-egress
+  namespace: default
+spec:
+  resourceConfig:
+    region: us-east-2
+    name: flink-demo-egress
+    streamMode: PROVISIONED
+    shardCount: 1
+    retentionPeriod: 26
+    tags:
+      createdBy: ken.ellinwood@imaginelearning.com
+      purpose: statefun-egress

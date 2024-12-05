@@ -1,0 +1,61 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xmanagedflinks.kellinwood.com
+spec:
+  group: kellinwood.com
+  names:
+    kind: XManagedFlink
+    plural: xmanagedflinks
+  claimNames:
+    kind: ManagedFlink
+    plural: managedflinks
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          properties:
+            spec:
+              properties:
+                resourceConfig:
+                  properties:
+                    region:
+                      type: string
+                    name:
+                      type: string
+                    codeBucket:
+                      type: string
+                    codeFile:
+                      type: string
+                    runtime:
+                      type: string
+                    parallelism:
+                      type: number
+                    environmentProperties:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          propertyGroup:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                propertyGroupId:
+                                  type: string
+                                propertyMap:
+                                  type: object
+                                  additionalProperties:
+                                    type: string
+                  type: object
+              type: object
+            status:
+              properties:
+                managedFlinkName:
+                  type: string
+                managedFlinkArn:
+                  type: string
+              type: object
+          type: object

@@ -1,0 +1,57 @@
+# Get the certificate and create a configmap
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cert-job
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+spec:
+  template:
+    spec:
+      serviceAccountName: cert-sa
+      containers:
+      - name: cert-container
+        image: bitnami/kubectl:1.30.3
+        command: ["sh", "-c"]
+        args:
+        - |-
+          sleep 20
+          cert=$(kubectl get secret -n default idpbuilder-cert -o go-template='{{range $k,$v := .data}}{{if not $v}}{{$v}}{{else}}{{$v | base64decode}}{{end}}{{"\n"}}{{end}}')
+          kubectl create configmap cert -n crossplane-system --from-literal=ca.crt="$cert" || echo "failed to create configmap"
+      restartPolicy: Never
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+  name: cert-sa
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cert-role
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "create"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "describe"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+  name: cert-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cert-role
+subjects:
+- kind: ServiceAccount
+  name: cert-sa
+  namespace: crossplane-system

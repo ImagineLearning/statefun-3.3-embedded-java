@@ -1,0 +1,44 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: s3buckets.kellinwood.com
+spec:
+  compositeTypeRef:
+    apiVersion: kellinwood.com/v1alpha1
+    kind: XS3Bucket
+  mode: Pipeline
+  pipeline:
+  - step: patch-and-transform
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - name: s3-bucket
+        base:
+          apiVersion: s3.aws.upbound.io/v1beta1
+          kind: Bucket
+          metadata:
+            annotations:
+              meta.upbound.io/example-id: s3/v1beta1/bucket
+            name: example
+          spec:
+            forProvider:
+              region: us-east-2
+            providerConfigRef:
+              name: provider-aws
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: metadata.name
+            toFieldPath: metadata.name
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.region
+            toFieldPath: spec.forProvider.region
+          - type: ToCompositeFieldPath
+            fromFieldPath: status.atProvider.arn
+            toFieldPath: status.bucketArn
+          - type: ToCompositeFieldPath
+            fromFieldPath: status.atProvider.id
+            toFieldPath: status.bucketName

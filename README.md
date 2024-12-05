@@ -98,6 +98,41 @@ building and installing Apache Flink Stateful Functions compatible with Flink 1.
 ./mvnw test
 ```
 
+## Running the project via Docker Compose
+
+Follow the instructions below to run the project via Docker Compose.  Note that Kinesis support is provided
+by a [localstack](https://www.localstack.cloud/) container.
+
+The demo works using three docker compose "profiles" (phases).
+1. In the first phase, the flink cluster running our stateful function application is started,
+   along with localstack, and an aws-cli container that creates the ingress and egress Kinesis streams.
+2. The second phase runs an aws-cli container to send events to the ingress stream.  The events
+   sent are from [product-cart-integration-test-events.jsonl](./src/test/resources/product-cart-integration-test-events.jsonl)
+3. The third phase runs an aws-cli container to fetch the events from the egress stream and output them to the console.
+```shell
+# Build this project and create the jar file
+./mvnw package
+
+# Build the flink docker images, and re-run these if code changes have been made
+docker compose build jobmanager
+docker compose build taskmanager
+
+# The statefun profile starts localstack, creates the kinesis streams, and starts the Flink jobmanager and taskmanager
+docker compose --profile statefun up -d
+
+# Optionally connect the IDE debugger to the taskmanager on localhost port 5066 at this point
+
+# Send some events
+docker compose --profile send-events up
+
+# Get and display the events from the egress stream
+# Note that some VPNs (i.e., ZScaler) can cause failures with 'yum'.  The workaround is to disconnect from the VPN first.
+docker compose --profile get-egress-events up
+
+# Shut everything down
+docker compose --profile all down
+```
+
 ## Running the project via AWS Managed Flink
 
 ### Version compatibility between AWS Managed Flink and Stateful Functions
@@ -115,25 +150,34 @@ branch, and build/install it locally via `mvn install`
 mvn package
 ```
 
-### Create an S3 bucket and upload this project's JAR file
+The demo can be provisioned in AWS in two ways... via CloudFormation or Crossplane
 
-To create the bucket, create a CloudFormation stack named `managed-flink-code-bucket` as defined [here](./managed-flink-poc-bucket.yaml),
+### Provisioning via AWS CloudFormation
+
+The templates and scripts used for provisioning the AWS resources via CloudFormation are in the [aws-cloudformation](./aws-cloudformation) directory.
+```
+cd aws-cloudformation
+```
+
+#### Create an S3 bucket and upload this project's JAR file
+
+To create the bucket, create a CloudFormation stack named `managed-flink-code-bucket` as defined [here](./aws-cloudformation/managed-flink-poc-bucket.yaml),
 and after that finishes, use the AWS CLI to upload the jar file:
 
 ```shell
 export AWS_ACCOUNT_ID=516535517513 # Imagine Learning Sandbox account
-aws s3 cp target/my-stateful-functions-embedded-java-3.3.0.jar \
+aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar \
           s3://managed-flink-poc-bucket-codebucket-${AWS_ACCOUNT_ID}/
 ```
 
-### Create the Kinesis streams, Managed Flink application, and related AWS Resources
+#### Create the Kinesis streams, Managed Flink application, and related AWS Resources
 
-Create a CloudFormation stack named `managed-flink-poc` as defined by the CloudFormation templates [here](./managed-flink-poc.yaml).
+Create a CloudFormation stack named `managed-flink-poc` as defined by the CloudFormation templates [here](./aws-cloudformation/managed-flink-poc.yaml).
 This stack includes a custom resource lambda that programmatically configures logging when the Flink application is created,
 and transitions the application from the Ready to Running state.
 
 
-### Monitor the CloudWatch logging output
+#### Monitor the CloudWatch logging output
 
 ```shell
 ./poc-tail-logs.sh
@@ -146,8 +190,151 @@ left off if shut down via Ctrl-C.  To start from scratch, remove the `.cwlogs` d
 ./poc-send-events.sh
 ```
 
-### Get and display the events published to the egress stream
+#### Get and display the events published to the egress stream
 ```shell
 ./poc-get-events.sh
 ```
+
+### Provisioning via Crossplane
+
+#### Prerequisites:
+- Docker
+- idpbuilder (https://github.com/cnoe-io/idpbuilder)
+- kubectl
+- jq
+- python3
+
+#### Introduction
+This demo of provisioning via Crossplane is nowhere near production quality.  It merely demonstrates that it is possible 
+to provision and run an AWS Managed Flink application via crossplane.  Many tasks normally performed via CI/CD must be 
+completed manually as described below.  The crossplane compositions currently use `function-patch-and-transform` instead 
+of a custom composition function, and because of that, many things in the compositions remain hard-coded (AWS account 
+number, region, ARNs in IAM roles, etc).  In production systems, the lambda and related infrastructure that auto-starts 
+the Flink application probably only needs to be installed once per AWS account, and as such those resources should be 
+provisioned via a separate claim.  Also, see my note below regarding the creation of a CloudWatch log group for the lambda.
+
+
+
+#### Instructions
+
+The files to run the crossplane demo are in the [aws-crossplane](./aws-crossplane) directory.
+
+##### Build the lambda handler package.  What? A lambda?
+
+The [managed resource for creating AWS Managed Flink applications](https://marketplace.upbound.io/providers/upbound/provider-aws-kinesisanalyticsv2/v1.17.0/resources/kinesisanalyticsv2.aws.upbound.io/Application/v1beta1)
+will do most of the work to get the Flink application provisioned, but if nothing else is done the application will
+become 'Ready', and not 'Running'.  Additional resources are required to auto-run the Flink app... namely a lambda that will
+invoke an API call to start the application.  This is in following with how it works when provisioning via CloudFormation.
+In CloudFormation though, the Lambda code can be inlined in a CloudFormation template, but in Crossplane the Lambda code must be
+referenced separately, e.g., via reference to the lambda package in an S3 file.
+
+Build the lambda package by following [the instructions here](./aws-crossplane/start-flink-lambda/README.md).  The resulting Zip file will be
+uploaded to S3 later, as you follow the steps below.
+
+The lambda will be provisioned along with AWS Managed Flink via a single claim, below.
+
+##### Create the CloudWatch log group for the lambda
+Login to AWS Identity Center and launch the web console for the Sandbox account.
+
+Confirm the existence of, and create if necessary, the CloudWatch log group `/aws/lambda/flink-demo2-starter`. I can't
+figure out how to do this using the managed resource provided by `provider-aws-cloudwatchlogs` because the log group
+for the lambda must be named exactly that, the MR doesn't provide a way to set the name explicitly, and k8s/crossplane
+doesn't like the slashes in `metadata.name`.
+
+##### Start the local IDP configured to use AWS
+```
+cd aws-crossplane
+```
+Login to AWS Identity Center, and copy the AWS environment variable commands from the IL Sandbox account, Access Keys page.
+
+Paste and execute the AWS environment variable commands, then run this script:
+
+```
+./local/aws/update_credentials.sh
+```
+
+Launch the local IDP using idpbuilder (https://github.com/cnoe-io/idpbuilder)
+
+```
+idpbuilder create -p ./local/aws
+```
+
+The `idpbuilder create` command takes a few minutes to complete, and even then it will take more time for crossplane to start and the providers to be loaded.
+
+Wait for the AWS providers to finish loading...
+
+```
+kubectl -n crossplane-system get pods | grep provider-aws
+```
+
+Wait until the command above returns a list of pods all in the `Running` state.
+
+##### Install the Crossplane resources (XRDs and Compositions)
+Install the Composite Resource Definitions and Compositions required by the demo. Ignore the warnings issued by the following command:
+
+```
+for i in $(find resources -name \*xrd.yaml -o -name \*comp.yaml); do k apply -f $i; done
+```
+
+At the time of this writing the demo does not utilize a custom composition function.  Instead, it uses the off-the-shelf function `function-patch-and-transform` which gets loaded during IDP creation, above.
+
+##### Provision AWS MAnaged Flink via Crossplane claims
+
+Provision the S3 bucket and Kinesis streams...
+```
+kubectl apply -f claims/demo-setup-claims.yaml
+```
+
+Wait for the resources to become synchronized and ready by checking the output of the following command:
+```
+kubectl get managed
+```
+The output of `kubectl get managed` will reveal the actual S3 bucket name under `EXTERNAL-NAME`.
+
+Return to AWS Identity Center and launch the web console for the Sandbox account.
+
+Visit the S3 services page.  Find the S3 bucket (flink-demo-bucket-*) and upload the following files to the bucket
+- `../target/my-stateful-functions-embedded-java-3.3.0.jar` (Flink demo application code)
+- `start-flink-lambda/start_flink_py.zip` (Lambda handler code which transitions the Managed Flink instance to the 'Running' state)
+
+Alternatively, use the AWS CLI to upload the files to the bucket (replace `XXXXX` with the bucket's unique suffix)...
+```
+aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar s3://flink-demo-bucket-XXXXX/my-stateful-functions-embedded-java-3.3.0.jar
+aws s3 cp start-flink-lambda/start_flink_py.zip s3://flink-demo-bucket-XXXXX/start_flink_py.zip
+```
+
+##### Provision the Managed Flink application  
+
+Applying the following claim will trigger the creation of the Flink application, its role, and log groups.  Note that the Flink application will become 'Ready' but will not run on its own.  Additional resources are required to auto-run the Flink app... a lambda for handling EventBridge events from the Flink application, an EventBridge rule and trigger to invoke the lambda, an IAM role allowing the lambda to make API calls to observe and control the Flink app, plus a permission for the EventBridge rule to invoke the lambda as a target.  When the lambda sees that the Flink application is in the Ready state, it will invoke an API call to start the application.
+
+```
+kubectl apply -f claims/managed-flink-claim.yaml
+```
+
+Wait until the Flink application is in the 'Running' state, then execute the following commands to send events and see the results:
+
+```
+# Send the test events
+./poc-send-events.sh
+
+# Fetch and display the results from the egress stream
+./poc-get-events.sh
+```
+
+```
+#### Cleanup
+
+```
+kubectl delete -f resources/claims/managed-flink-claims.yaml
+kubectl delete -f resources/claims/demo-setup-claims.yaml
+```
+
+Visit the S3 bucket in the web console and delete the files in the bucket.  Having issued the `kubectl delete` command on the demo setup claims will trigger the bucket to be deleted automatically soon after it is emptied.
+
+Shut down the local IDP with the command:
+```
+idpbuilder delete
+```
+
+Manually remove the CloudWatch log group `/aws/lambda/flink-demo2-starter`.
 

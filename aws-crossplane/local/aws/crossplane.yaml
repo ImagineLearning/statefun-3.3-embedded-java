@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crossplane
+  namespace: argocd
+  labels:
+    env: dev
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: 'https://charts.crossplane.io/stable'
+      targetRevision: 1.17.1
+      helm:
+        releaseName: crossplane
+        values: |
+          args:
+            - "--enable-environment-configs"
+          registryCaBundleConfig:
+            name: "cert"
+            key: "ca.crt"
+      chart: crossplane
+    - repoURL: cnoe://cert-creation
+      targetRevision: HEAD
+      path: "."
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: crossplane-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,15 @@
+apiVersion: kellinwood.com/v1alpha1
+kind: KinesisStream
+metadata:
+  name: my-kinesis-stream
+  namespace: default
+spec:
+  resourceConfig:
+    region: us-east-2
+    name: my-kinesis-stream
+    streamMode: PROVISIONED
+    shardCount: 1
+    retentionPeriod: 26
+    tags:
+      createdBy: bart.simpson@the_simpsons.com
+      purpose: to demonstrate creation of a Kinesis stream

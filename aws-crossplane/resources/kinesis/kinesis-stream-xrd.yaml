@@ -1,0 +1,61 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xkinesisstreams.kellinwood.com
+spec:
+  group: kellinwood.com
+  names:
+    kind: XKinesisStream
+    plural: xkinesisstreams
+  claimNames:
+    kind: KinesisStream
+    plural: kinesisstreams
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          properties:
+            spec:
+              description: KinesisStreamSpec defines the desired state of the stream
+              properties:
+                resourceConfig:
+                  description: ResourceConfig defines general properties of this AWS resource.
+                  properties:
+                    region:
+                      type: string
+                      description: region for the stream, required
+                    name:
+                      type: string
+                    streamMode:
+                      type: string
+                      enum:
+                      - PROVISIONED
+                      - ON_DEMAND
+                      description: the capacity mode of the stream, must be PROVISIONED or ON_DEMAND
+                    shardCount:
+                      type: number
+                      description: The number of shards when streamMode=PROVISIONED
+                    retentionPeriod:
+                      type: number
+                      description: Retention period in hours, default is 24
+                    tags:
+                      description: tags to apply to the stream
+                      type: object
+                      properties:
+                        createdBy:
+                          type: string
+                        purpose: 
+                          type: string
+                  type: object
+              type: object
+            status:
+              description: KinesisStreamStatus defines the observed state of stream
+              properties:
+                streamName:
+                  type: string
+                streamArn:
+                  type: string
+              type: object
+          type: object

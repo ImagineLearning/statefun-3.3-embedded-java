@@ -1,0 +1,8 @@
+apiVersion: kellinwood.com/v1alpha1
+kind: S3Bucket
+metadata:
+  name: flink-demo-bucket
+  namespace: default
+spec:
+  resourceConfig:
+    region: us-east-2
