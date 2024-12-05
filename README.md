@@ -278,7 +278,7 @@ for i in $(find resources -name \*xrd.yaml -o -name \*comp.yaml); do k apply -f 
 
 At the time of this writing the demo does not utilize a custom composition function.  Instead, it uses the off-the-shelf function `function-patch-and-transform` which gets loaded during IDP creation, above.
 
-##### Provision AWS MAnaged Flink via Crossplane claims
+##### Provision AWS Managed Flink via Crossplane claims
 
 Provision the S3 bucket and Kinesis streams...
 ```
