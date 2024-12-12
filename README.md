@@ -203,11 +203,11 @@ Steps
 
 ```shell
 cd aws-terraform
-# Set AWS variables AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, etc
+# Configure your AWS profile, set AWS env vars, or run 'aws configure sso', etc
 terraform init
-terraform apply
+terraform apply # When prompted, enter 'yes'
 ```
-While the `terraform apply` command is running, upload the application JAR file to the S3 bucket.  The upload may fail if the S3 bucket has not been created by Terraform yet, but keep trying until it succeeds.
+Immediately after entering 'yes' to the prompt issued by `terraform apply`, switch to another shell/terminal tab and upload the application JAR file to the S3 bucket.  The upload may fail if the S3 bucket has not been created by Terraform yet, so keep trying until it succeeds.
 
 ```shell
 export AWS_ACCOUNT_ID=516535517513 # Imagine Learning Sandbox account
@@ -215,12 +215,12 @@ aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar \
           s3://flink-demo-bucket-${AWS_ACCOUNT_ID}/
 ```
 
-Follow the directions from the Crossplane section regarding sending sample events.  Use the scripts in the `aws-crossplane` directory to send the sample input events, get the events written to the egress stream, and view the Flink application logging output.
+Follow the directions near the end of the Crossplane section, below, regarding sending sample events.  Use the scripts in the `aws-crossplane` directory to send the sample input events, get the events written to the egress stream, and view the Flink application logging output.
 
 Cleanup by deleting the jar file from the S3 bucket, `flink-demo-bucket-${AWS_ACCOUNT_ID}` and running the command:
 
-```
-terraform destroy
+```shell
+terraform destroy # When prompted, enter 'yes'
 ```
 
 The Kinesis stream `flink-demo-ingress` must be manually deleted since Flink adds a Fanout consumer to the stream, and the consumer will block deletion.
