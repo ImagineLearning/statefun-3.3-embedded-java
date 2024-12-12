@@ -1,12 +1,12 @@
 apiVersion: kellinwood.com/v1alpha1
 kind: ManagedFlink
 metadata:
-  name: flink-demo2
+  name: flink-demo
   namespace: default
 spec:
   resourceConfig:
     region: us-east-2
-    name: flink-demo2
+    name: flink-demo
     codeBucket: flink-demo-bucket
     codeFile: my-stateful-functions-embedded-java-3.3.0.jar
     runtime: FLINK-1_18

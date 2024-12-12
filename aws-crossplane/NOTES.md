@@ -1,14 +1,14 @@
 
 I initially put the stream ARN values in the environment section of (the managed flink claim)[./claims/mananged-flink-claim.yaml].
 Just the plain stream names are required, however after updating the values in the claim and applying the change, I see this
-error in the output of `kubectl describe application.kinesisanalyticsv2.aws.upbound.io/flink-demo2-application`...
+error in the output of `kubectl describe application.kinesisanalyticsv2.aws.upbound.io/flink-demo-application`...
 
 ```
 Warning  CannotUpdateExternalResource     4m19s (x14 over 6m31s)  managed/kinesisanalyticsv2.aws.upbound.io/v1beta1, kind=application  
 (combined from similar events): async update failed: failed to update the resource: [{0 updating Kinesis Analytics v2 Application 
-(arn:aws:kinesisanalytics:us-east-2:516535517513:application/flink-demo2-application): operation error Kinesis Analytics V2: 
+(arn:aws:kinesisanalytics:us-east-2:516535517513:application/flink-demo-application): operation error Kinesis Analytics V2: 
 UpdateApplication, https response error StatusCode: 400, RequestID: 39586af4-c1cc-4515-b818-c86f8f176671, 
-InvalidApplicationConfigurationException: Failed to take snapshot for the application flink-demo2-application at this moment. 
+InvalidApplicationConfigurationException: Failed to take snapshot for the application flink-demo-application at this moment. 
 The application is currently experiencing downtime. Please check the application's CloudWatch metrics or CloudWatch 
 logs for any possible errors and retry the request. You can also retry the request after disabling the snapshots in 
 the Kinesis Data Analytics console or by updating the ApplicationSnapshotConfiguration through the AWS SDK.  []}]
@@ -23,9 +23,9 @@ showed in the AWS console, but the new app got stuck on this:
 ```
 Warning  CannotCreateExternalResource     51s (x39 over 4m41s)   managed/kinesisanalyticsv2.aws.upbound.io/v1beta1, kind=application  
 (combined from similar events): async create failed: failed to create the resource: [{0 creating Kinesis Analytics v2 Application 
-(flink-demo2-application): operation error Kinesis Analytics V2: CreateApplication, https response error StatusCode: 400, 
+(flink-demo-application): operation error Kinesis Analytics V2: CreateApplication, https response error StatusCode: 400, 
 RequestID: 64366786-9f40-440f-8fcd-c3376f0cc619, ConcurrentModificationException: Tags are already registered for this 
-resource ARN: arn:aws:kinesisanalytics:us-east-2:516535517513:application/flink-demo2-application, please retry later. 
+resource ARN: arn:aws:kinesisanalytics:us-east-2:516535517513:application/flink-demo-application, please retry later. 
 Or you can create without tags and then add tags using TagResource API after successful resource creation.  []}]
 ```
 
@@ -39,7 +39,7 @@ But in the AWS Console, the app seems stuck with the 'Updating' status.  OK, wai
 
 ```
 {
-    "applicationARN": "arn:aws:kinesisanalytics:us-east-2:516535517513:application/flink-demo2-application",
+    "applicationARN": "arn:aws:kinesisanalytics:us-east-2:516535517513:application/flink-demo-application",
     "applicationVersionId": "3",
     "locationInformation": "org.apache.hadoop.fs.s3a.impl.MultiObjectDeleteSupport.translateDeleteException(MultiObjectDeleteSupport.java:107)",
     "logger": "org.apache.hadoop.fs.s3a.impl.MultiObjectDeleteSupport",

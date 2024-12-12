@@ -33,6 +33,8 @@ spec:
                       type: string
                     parallelism:
                       type: number
+                    startApplication:
+                      type: boolean
                     environmentProperties:
                       type: array
                       items:

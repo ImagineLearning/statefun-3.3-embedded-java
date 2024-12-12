@@ -11,6 +11,7 @@ spec:
     codeFile: my-stateful-functions-embedded-java-3.3.0.jar
     runtime: FLINK-1_18
     parallelism: 1
+#    startApplication: true
     environmentProperties:
       - propertyGroup:
           - propertyGroupId: StatefunApplicationProperties

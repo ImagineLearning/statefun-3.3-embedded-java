@@ -71,7 +71,6 @@ spec:
                     matchControllerRef: true
               region: us-east-2
               runtimeEnvironment: FLINK-1_18
-              startApplication: true
               serviceExecutionRoleSelector:
                 matchLabels:
                   rolePurpose: flink-application
@@ -168,7 +167,7 @@ spec:
                         {
                           "Effect": "Allow",
                           "Resource": [
-                            "arn:aws:logs:us-east-2:516535517513:log-group:flink-demo2-app-log-group"
+                            "arn:aws:logs:us-east-2:516535517513:log-group:flink-demo-app-log-group"
                           ],
                           "Action": [
                             "logs:DescribeLogGroups",
@@ -326,7 +325,7 @@ spec:
                       {
                         "Effect": "Allow",
                         "Resource": [
-                          "arn:aws:kinesisanalytics:us-east-2:516535517513:application/flink-demo2-application"
+                          "arn:aws:kinesisanalytics:us-east-2:516535517513:application/flink-demo-application"
                         ],
                         "Action": [
                           "kinesisanalytics:DescribeApplication",

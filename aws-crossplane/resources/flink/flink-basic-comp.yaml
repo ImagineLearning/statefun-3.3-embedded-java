@@ -71,7 +71,6 @@ spec:
                     matchControllerRef: true
               region: us-east-2
               runtimeEnvironment: FLINK-1_18
-              startApplication: true
               serviceExecutionRoleSelector:
                 matchLabels:
                   rolePurpose: flink-application
@@ -95,6 +94,9 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: spec.resourceConfig.runtime
             toFieldPath: spec.forProvider.runtimeEnvironment
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.startApplication
+            toFieldPath: spec.forProvider.startApplication
           - type: FromCompositeFieldPath
             fromFieldPath: spec.resourceConfig.parallelism
             toFieldPath: spec.forProvider.applicationConfiguration[0].flinkApplicationConfiguration[0].parallelismConfiguration[0].parallelism

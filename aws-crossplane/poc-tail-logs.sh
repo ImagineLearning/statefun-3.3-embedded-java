@@ -20,8 +20,8 @@ while true; do
     aws logs get-log-events \
 	--start-from-head \
 	$NEXT_TOKEN_ARG \
-	--log-group-name flink-demo2-app-log-group \
-	--log-stream-name flink-demo2-app-log-stream \
+	--log-group-name flink-demo-app-log-group \
+	--log-stream-name flink-demo-app-log-stream \
 	>$CWLOG_FILE
     
     NEXT_TOKEN=$(cat $CWLOG_FILE | jq -crM .nextForwardToken)

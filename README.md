@@ -266,7 +266,7 @@ The lambda will be provisioned along with AWS Managed Flink via a single claim, 
 ##### Create the CloudWatch log group for the lambda
 Login to AWS Identity Center and launch the web console for the Sandbox account.
 
-Confirm the existence of, and create if necessary, the CloudWatch log group `/aws/lambda/flink-demo2-starter`. I can't
+Confirm the existence of, and create if necessary, the CloudWatch log group `/aws/lambda/flink-demo-starter`. I can't
 figure out how to do this using the managed resource provided by `provider-aws-cloudwatchlogs` because the log group
 for the lambda must be named exactly that, the MR doesn't provide a way to set the name explicitly, and k8s/crossplane
 doesn't like the slashes in `metadata.name`.
@@ -327,10 +327,11 @@ Visit the S3 services page.  Find the S3 bucket (flink-demo-bucket-*) and upload
 - `../target/my-stateful-functions-embedded-java-3.3.0.jar` (Flink demo application code)
 - `start-flink-lambda/start_flink_py.zip` (Lambda handler code which transitions the Managed Flink instance to the 'Running' state)
 
-Alternatively, use the AWS CLI to upload the files to the bucket (replace `XXXXX` with the bucket's unique suffix)...
+Alternatively, use the AWS CLI to upload the files...
 ```
-aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar s3://flink-demo-bucket-XXXXX/my-stateful-functions-embedded-java-3.3.0.jar
-aws s3 cp start-flink-lambda/start_flink_py.zip s3://flink-demo-bucket-XXXXX/start_flink_py.zip
+flink_bucket_name=$(kubectl get managed | grep bucket | awk '{print $4}')
+aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar s3://${flink_bucket_name}/my-stateful-functions-embedded-java-3.3.0.jar
+aws s3 cp start-flink-lambda/start_flink_py.zip s3://${flink_bucket_name}/start_flink_py.zip
 ```
 
 ##### Provision the Managed Flink application  
@@ -365,5 +366,5 @@ Shut down the local IDP with the command:
 idpbuilder delete
 ```
 
-Manually remove the CloudWatch log group `/aws/lambda/flink-demo2-starter`.
+Manually remove the CloudWatch log group `/aws/lambda/flink-demo-starter`.
 
