@@ -251,17 +251,25 @@ The files to run the crossplane demo are in the [aws-crossplane](./aws-crossplan
 
 ##### Build the lambda handler package.  What? A lambda?
 
-The [managed resource for creating AWS Managed Flink applications](https://marketplace.upbound.io/providers/upbound/provider-aws-kinesisanalyticsv2/v1.17.0/resources/kinesisanalyticsv2.aws.upbound.io/Application/v1beta1)
-will do most of the work to get the Flink application provisioned, but if nothing else is done the application will
-become 'Ready', and not 'Running'.  Additional resources are required to auto-run the Flink app... namely a lambda that will
+> IMPORTANT: Using the lambda is optional and not recommended.
+
+> At one point it appeared that the managed resource for Flink wouldn't start the Flink application, and that like the CloudWatch 
+approach, a lambda is needed to handle events from the AWS resource and transition the application to the `Running` state. This
+is not actually the case, but support for the lambda is still included.  To use the lambda, it must be packaged and uploaded to the
+S3 bucket, and the managed flink claim must select the 'lambda' composition.
+
+> When using the [flink-lambda](./aws-crossplane/resources/flink/flink-lambda-comp.yaml) composition, 
+the [managed resource for creating AWS Managed Flink applications](https://marketplace.upbound.io/providers/upbound/provider-aws-kinesisanalyticsv2/v1.17.0/resources/kinesisanalyticsv2.aws.upbound.io/Application/v1beta1)
+will do most of the work to get the Flink application provisioned, and the application will
+become 'Ready' (not 'Running').  In this case, the lambda will
 invoke an API call to start the application.  This is in following with how it works when provisioning via CloudFormation.
 In CloudFormation though, the Lambda code can be inlined in a CloudFormation template, but in Crossplane the Lambda code must be
 referenced separately, e.g., via reference to the lambda package in an S3 file.
 
-Build the lambda package by following [the instructions here](./aws-crossplane/start-flink-lambda/README.md).  The resulting Zip file will be
+> Build the lambda package by following [the instructions here](./aws-crossplane/start-flink-lambda/README.md).  The resulting Zip file will be
 uploaded to S3 later, as you follow the steps below.
 
-The lambda will be provisioned along with AWS Managed Flink via a single claim, below.
+> The lambda will be provisioned along with AWS Managed Flink via a single claim, below.
 
 ##### Create the CloudWatch log group for the lambda
 Login to AWS Identity Center and launch the web console for the Sandbox account.
@@ -325,22 +333,26 @@ Return to AWS Identity Center and launch the web console for the Sandbox account
 
 Visit the S3 services page.  Find the S3 bucket (flink-demo-bucket-*) and upload the following files to the bucket
 - `../target/my-stateful-functions-embedded-java-3.3.0.jar` (Flink demo application code)
-- `start-flink-lambda/start_flink_py.zip` (Lambda handler code which transitions the Managed Flink instance to the 'Running' state)
+- `start-flink-lambda/start_flink_py.zip` (Optional, lambda handler code which transitions the Managed Flink instance to the 'Running' state)
 
 Alternatively, use the AWS CLI to upload the files...
 ```
 flink_bucket_name=$(kubectl get managed | grep bucket | awk '{print $4}')
 aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar s3://${flink_bucket_name}/my-stateful-functions-embedded-java-3.3.0.jar
-aws s3 cp start-flink-lambda/start_flink_py.zip s3://${flink_bucket_name}/start_flink_py.zip
+aws s3 cp start-flink-lambda/start_flink_py.zip s3://${flink_bucket_name}/start_flink_py.zip # optional
 ```
 
 ##### Provision the Managed Flink application  
 
-Applying the following claim will trigger the creation of the Flink application, its role, and log groups.  Note that the Flink application will become 'Ready' but will not run on its own.  Additional resources are required to auto-run the Flink app... a lambda for handling EventBridge events from the Flink application, an EventBridge rule and trigger to invoke the lambda, an IAM role allowing the lambda to make API calls to observe and control the Flink app, plus a permission for the EventBridge rule to invoke the lambda as a target.  When the lambda sees that the Flink application is in the Ready state, it will invoke an API call to start the application.
+Applying the following claim will trigger the creation of the Flink application, its role, and log groups.  Note that by default Flink application will become 'Ready' since `startApplication: true` is commented-out in the claim.  
 
 ```
 kubectl apply -f claims/managed-flink-claim.yaml
 ```
+
+Visit the AWS Managed Flink applications page in the web console.  When the application statis is `Ready`, then uncomment the `startAppication: true` line in the `managed-flink-claim.yaml` file and re-run the `kubectl apply -f claims/managed-flink-claim.yaml` command.  If the initial claim apply is performed with `startApplication: true` then Crossplane appears to go into a loop where it updates the application every few minutes, and so it switches back and forth between `Running` and `Updating` :(
+
+> If using the `flink-lambda` composition, no further action should be required to transition the Flink application to the `Running` state.
 
 Wait until the Flink application is in the 'Running' state, then execute the following commands to send events and see the results:
 
