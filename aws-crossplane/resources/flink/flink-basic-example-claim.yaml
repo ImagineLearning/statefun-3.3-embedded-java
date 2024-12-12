@@ -15,8 +15,8 @@ spec:
       - propertyGroup:
           - propertyGroupId: StatefunApplicationProperties
             propertyMap:
-              EVENTS_INGRESS_STREAM_DEFAULT: arn:aws:kinesis:us-east-2:000000000000:stream/flink-demo-ingress
-              EVENTS_EGRESS_STREAM_DEFAULT: arn:aws:kinesis:us-east-2:000000000000:stream/flink-demo-egress
+              EVENTS_INGRESS_STREAM_DEFAULT: flink-demo-ingress
+              EVENTS_EGRESS_STREAM_DEFAULT: flink-demo-egress
               AWS_REGION: us-east-2
   compositionSelector:
     matchLabels:

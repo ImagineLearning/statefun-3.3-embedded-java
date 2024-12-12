@@ -195,6 +195,36 @@ left off if shut down via Ctrl-C.  To start from scratch, remove the `.cwlogs` d
 ./poc-get-events.sh
 ```
 
+### Provisioning via Terraform
+
+Requires installing the [Terraform CLI](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
+
+Steps
+
+```shell
+cd aws-terraform
+# Set AWS variables AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, etc
+terraform init
+terraform apply
+```
+While the `terraform apply` command is running, upload the application JAR file to the S3 bucket.  The upload may fail if the S3 bucket has not been created by Terraform yet, but keep trying until it succeeds.
+
+```shell
+export AWS_ACCOUNT_ID=516535517513 # Imagine Learning Sandbox account
+aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar \
+          s3://flink-demo-bucket-${AWS_ACCOUNT_ID}/
+```
+
+Follow the directions from the Crossplane section regarding sending sample events.  Use the scripts in the `aws-crossplane` directory to send the sample input events, get the events written to the egress stream, and view the Flink application logging output.
+
+Cleanup by deleting the jar file from the S3 bucket, `flink-demo-bucket-${AWS_ACCOUNT_ID}` and running the command:
+
+```
+terraform destroy
+```
+
+The Kinesis stream `flink-demo-ingress` must be manually deleted since Flink adds a Fanout consumer to the stream, and the consumer will block deletion.
+
 ### Provisioning via Crossplane
 
 #### Prerequisites:
