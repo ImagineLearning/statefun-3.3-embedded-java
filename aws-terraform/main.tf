@@ -191,6 +191,10 @@ resource "aws_kinesisanalyticsv2_application" "flink_demo_tf" {
       code_content_type = "ZIPFILE"
     }
 
+    application_snapshot_configuration {
+      snapshots_enabled = true
+    }
+
     environment_properties {
       property_group {
         property_group_id = "StatefunApplicationProperties"
