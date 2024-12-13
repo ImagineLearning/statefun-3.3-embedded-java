@@ -249,9 +249,11 @@ provisioned via a separate claim.  Also, see my note below regarding the creatio
 
 The files to run the crossplane demo are in the [aws-crossplane](./aws-crossplane) directory.
 
+Skip the instructions for using a lambda to start the Flink application.  Go to [here instead](#start-the-local-idp-configured-to-use-aws)
+
 ##### Build the lambda handler package.  What? A lambda?
 
-> IMPORTANT: Using the lambda is optional and not recommended.
+> :warning: IMPORTANT: Using the lambda is optional and not recommended.
 
 > At one point it appeared that the managed resource for Flink wouldn't start the Flink application, and that like the CloudWatch 
 approach, a lambda is needed to handle events from the AWS resource and transition the application to the `Running` state. This
@@ -272,6 +274,9 @@ uploaded to S3 later, as you follow the steps below.
 > The lambda will be provisioned along with AWS Managed Flink via a single claim, below.
 
 ##### Create the CloudWatch log group for the lambda
+
+> :warning: OPTIONAL: Follow these instructions only if you are using the lambda to start the Flink application
+
 Login to AWS Identity Center and launch the web console for the Sandbox account.
 
 Confirm the existence of, and create if necessary, the CloudWatch log group `/aws/lambda/flink-demo-starter`. I can't
@@ -339,12 +344,16 @@ Alternatively, use the AWS CLI to upload the files...
 ```
 flink_bucket_name=$(kubectl get managed | grep bucket | awk '{print $4}')
 aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar s3://${flink_bucket_name}/my-stateful-functions-embedded-java-3.3.0.jar
-aws s3 cp start-flink-lambda/start_flink_py.zip s3://${flink_bucket_name}/start_flink_py.zip # optional
+
+# If using the lambda to start the Flink application, upload the lambda package
+aws s3 cp start-flink-lambda/start_flink_py.zip s3://${flink_bucket_name}/start_flink_py.zip
 ```
 
 ##### Provision the Managed Flink application  
 
 Applying the following claim will trigger the creation of the Flink application, its role, and log groups.  Note that by default Flink application will become 'Ready' since `startApplication: true` is commented-out in the claim.  
+
+To use the lambda to start the Flink application, update the file `claims/managed-flink-claim.yaml` and change the value for `appReadyHandler` to `lambda`.
 
 ```
 kubectl apply -f claims/managed-flink-claim.yaml
