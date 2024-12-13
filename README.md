@@ -359,9 +359,8 @@ To use the lambda to start the Flink application, update the file `claims/manage
 kubectl apply -f claims/managed-flink-claim.yaml
 ```
 
-Visit the AWS Managed Flink applications page in the web console.  When the application statis is `Ready`, then uncomment the `startAppication: true` line in the `managed-flink-claim.yaml` file and re-run the `kubectl apply -f claims/managed-flink-claim.yaml` command.  If the initial claim apply is performed with `startApplication: true` then Crossplane appears to go into a loop where it updates the application every few minutes, and so it switches back and forth between `Running` and `Updating` :(
+If using the lambda to start the Flink application, no further action should be required.  Otherwise, visit the AWS Managed Flink applications page in the web console.  When the application statis is `Ready`, then uncomment the `startAppication: true` line in the `managed-flink-claim.yaml` file and re-run the `kubectl apply -f claims/managed-flink-claim.yaml` command.  If the initial claim apply is performed with `startApplication: true` then Crossplane appears to go into a loop where it updates the application every few minutes, and so it switches back and forth between `Running` and `Updating` :(
 
-> If using the `flink-lambda` composition, no further action should be required to transition the Flink application to the `Running` state.
 
 Wait until the Flink application is in the 'Running' state, then execute the following commands to send events and see the results:
 
