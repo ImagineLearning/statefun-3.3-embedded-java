@@ -292,7 +292,7 @@ Login to AWS Identity Center, and copy the AWS credential environment variables 
 Paste and execute the AWS environment variable commands, then run this script:
 
 ```
-./local/aws/update_credentials.sh
+./cloud/aws/update_credentials.sh
 ```
 
 Launch the local IDP using idpbuilder (https://github.com/cnoe-io/idpbuilder)
