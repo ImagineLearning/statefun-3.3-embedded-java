@@ -2,7 +2,7 @@
 apiVersion: kellinwood.com/v1alpha1
 kind: S3Bucket
 metadata:
-  name: flink-demo-bucket
+  name: flink-cp-demo-bucket
   namespace: default
 spec:
   resourceConfig:
@@ -11,12 +11,12 @@ spec:
 apiVersion: kellinwood.com/v1alpha1
 kind: KinesisStream
 metadata:
-  name: flink-demo-ingress
+  name: flink-cp-demo-ingress
   namespace: default
 spec:
   resourceConfig:
     region: us-east-2
-    name: flink-demo-ingress
+    name: flink-cp-demo-ingress
     streamMode: PROVISIONED
     shardCount: 1
     retentionPeriod: 26
@@ -27,12 +27,12 @@ spec:
 apiVersion: kellinwood.com/v1alpha1
 kind: KinesisStream
 metadata:
-  name: flink-demo-egress
+  name: flink-cp-demo-egress
   namespace: default
 spec:
   resourceConfig:
     region: us-east-2
-    name: flink-demo-egress
+    name: flink-cp-demo-egress
     streamMode: PROVISIONED
     shardCount: 1
     retentionPeriod: 26

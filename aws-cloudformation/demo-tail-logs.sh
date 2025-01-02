@@ -4,7 +4,6 @@ set -e
 
 cd $(dirname $0)
 
-AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-516535517513}
 NEXT_TOKEN_ARG=
 
 CWLOGS_DIR=.cwlogs
@@ -19,11 +18,11 @@ fi
 while true; do
     CWLOG_FILE=$CWLOGS_DIR/$(printf "%010d" $ITERATION).json
     aws logs get-log-events \
-	--start-from-head \
-	$NEXT_TOKEN_ARG \
-	--log-group-name managed-flink-poc-log-group-${AWS_ACCOUNT_ID} \
-	--log-stream-name managed-flink-poc-log-stream-${AWS_ACCOUNT_ID} \
-	>$CWLOG_FILE
+    --start-from-head \
+    $NEXT_TOKEN_ARG \
+    --log-group-name FlinkCfDemoLogGroup \
+    --log-stream-name FlinkCfDemoLogStream \
+    >$CWLOG_FILE
     
     NEXT_TOKEN=$(cat $CWLOG_FILE | jq -crM .nextForwardToken)
     echo $NEXT_TOKEN >$CWLOGS_DIR/next.token

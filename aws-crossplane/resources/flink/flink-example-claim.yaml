@@ -11,7 +11,7 @@ spec:
     codeFile: my-stateful-functions-embedded-java-3.3.0.jar
     runtime: FLINK-1_18
     parallelism: 1
-#    startApplication: true
+    # startApplication: true
     environmentProperties:
       - propertyGroup:
           - propertyGroupId: StatefunApplicationProperties
@@ -19,8 +19,3 @@ spec:
               EVENTS_INGRESS_STREAM_DEFAULT: flink-demo-ingress
               EVENTS_EGRESS_STREAM_DEFAULT: flink-demo-egress
               AWS_REGION: us-east-2
-  compositionSelector:
-    matchLabels:
-      appReadyHandler: none # Use the composition that doesn't provision a lambda function to handle the app ready signal
-
-

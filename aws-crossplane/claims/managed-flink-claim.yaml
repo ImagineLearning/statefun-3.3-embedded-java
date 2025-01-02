@@ -1,13 +1,13 @@
 apiVersion: kellinwood.com/v1alpha1
 kind: ManagedFlink
 metadata:
-  name: flink-demo
+  name: flink-cp-demo
   namespace: default
 spec:
   resourceConfig:
     region: us-east-2
-    name: flink-demo
-    codeBucket: flink-demo-bucket
+    name: flink-cp-demo
+    codeBucket: flink-cp-demo-bucket
     codeFile: my-stateful-functions-embedded-java-3.3.0.jar
     runtime: FLINK-1_18
     # startApplication: true
@@ -16,9 +16,6 @@ spec:
       - propertyGroup:
           - propertyGroupId: StatefunApplicationProperties
             propertyMap:
-              EVENTS_INGRESS_STREAM_DEFAULT: flink-demo-ingress
-              EVENTS_EGRESS_STREAM_DEFAULT: flink-demo-egress
+              EVENTS_INGRESS_STREAM_DEFAULT: flink-cp-demo-ingress
+              EVENTS_EGRESS_STREAM_DEFAULT: flink-cp-demo-egress
               AWS_REGION: us-east-2
-  compositionSelector:
-    matchLabels:
-      appReadyHandler: none # or maybe 'lambda'.  See ../../README.md#build-the-lambda-handler-package--what-a-lambda

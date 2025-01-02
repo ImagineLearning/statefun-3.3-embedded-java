@@ -4,6 +4,7 @@ dependency-reduced-pom.xml
 *~
 .*~
 .cwlogs
+.next-shard-iterator
 .DS_Store
 venv*
 .terraform*

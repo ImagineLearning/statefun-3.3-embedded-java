@@ -57,6 +57,7 @@ services:
       -D "state.savepoints.dir=file:///savepoints" 
       -D "state.checkpoints.dir=file:///checkpoints" 
       --job-classname org.apache.flink.statefun.flink.core.StatefulFunctionsJob
+#      --fromSavepoint=file:///savepoints/savepoint-xxxx-yyyyyy
     entrypoint: /entrypoint.sh
     expose:
       - "6123"

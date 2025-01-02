@@ -87,6 +87,12 @@ public class ProductStatefulFunction extends AbstractStatefulFunction {
     }
 
     private void handleProductEvent(Context context, CloudEvent event) {
+        if (state.get() == null) {
+            LOG.info("Creating state for {}", context.self().id());
+        }
+        else {
+            LOG.info("Updating state for {}", context.self().id());
+        }
         state.set(fromProductEventDetails(cloudEventDataAccess.toProductEventDetails(event)));
         notifySubscribers(context, event);
     }

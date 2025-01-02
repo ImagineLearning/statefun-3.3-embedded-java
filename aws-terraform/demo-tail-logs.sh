@@ -18,11 +18,11 @@ fi
 while true; do
     CWLOG_FILE=$CWLOGS_DIR/$(printf "%010d" $ITERATION).json
     aws logs get-log-events \
-	--start-from-head \
-	$NEXT_TOKEN_ARG \
-	--log-group-name flink-demo-app-log-group \
-	--log-stream-name flink-demo-app-log-stream \
-	>$CWLOG_FILE
+    --start-from-head \
+    $NEXT_TOKEN_ARG \
+    --log-group-name flink-tf-demo-log-group \
+    --log-stream-name flink-tf-demo-log-stream \
+    >$CWLOG_FILE
     
     NEXT_TOKEN=$(cat $CWLOG_FILE | jq -crM .nextForwardToken)
     echo $NEXT_TOKEN >$CWLOGS_DIR/next.token

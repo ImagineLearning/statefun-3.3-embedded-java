@@ -5,7 +5,7 @@ Resources:
   CodeBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub ${AWS::StackName}-codebucket-${AWS::AccountId}
+      BucketName: !Sub ${AWS::StackName}-${AWS::AccountId}
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -29,7 +29,7 @@ Resources:
               Bool:
                 aws:SecureTransport: 'false'
 Outputs:
-  ManagedFlinkCodeBucketArn:
+  FlinkCfDemoCodeBucketArn:
     Value: !GetAtt CodeBucket.Arn
     Export:
-      Name: ManagedFlinkCodeBucketArn # Exported for use by the stack defined in managed-flink-poc.yaml
+      Name: FlinkCfDemoCodeBucketArn # Exported for use by the stack defined in flink-cf-demo-stack.yaml

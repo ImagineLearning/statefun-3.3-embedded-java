@@ -79,7 +79,14 @@ public class CartStatefulFunction extends AbstractStatefulFunction {
 
     private void handleCartProductEvent(Context context, CloudEvent event) {
         CartProductEventDetails cartProduct = cloudEventDataAccess.toCartProductEventDetails(event);
-        CartStateDetails cartState = state.getOrDefault(() -> new CartStateDetails(cartProduct.getCartId()));
+        CartStateDetails cartState = state.get();
+        if (cartState == null) {
+            LOG.info("Creating state for {}", context.self().id());
+            cartState = new CartStateDetails(cartProduct.getCartId());
+        }
+        else {
+            LOG.info("Updating state for {}", context.self().id());
+        }
 
         CartItemStateDetails cartItem = cartState.getItems().get(cartProduct.getProductId());
 
@@ -87,7 +94,6 @@ public class CartStatefulFunction extends AbstractStatefulFunction {
         final int resultingItemQuantity;
 
         if (cartItem == null) {
-            startingItemQuantity = 0;
             resultingItemQuantity = cartProduct.getQuantity();
         }
         else {
@@ -130,8 +136,12 @@ public class CartStatefulFunction extends AbstractStatefulFunction {
     private void handleProductEvent(Context context, CloudEvent event) {
         CartStateDetails cartState = state.get();
         if (cartState == null) {
+            LOG.info("Nonexistent state for {}", context.self().id());
             // Nothing to do
             return;
+        }
+        else {
+            LOG.info("Updating state for {}", context.self().id());
         }
         ProductEventDetails productDetails = cloudEventDataAccess.toProductEventDetails(event);
 
@@ -172,6 +182,7 @@ public class CartStatefulFunction extends AbstractStatefulFunction {
                 .withTime(OffsetDateTime.now(ZoneOffset.UTC))
                 .build();
 
+        LOG.info("Publishing cart status event to egress: {}", cloudEventJsonFormat.serialize(cartStatusEvent));
         egressEvent(context, cartStatusEvent, cartState.getId());
     }
 }

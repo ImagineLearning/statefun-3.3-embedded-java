@@ -30,7 +30,7 @@ public abstract class AbstractStatefulFunction implements StatefulFunction {
     public abstract FunctionType getFunctionType();
 
     @Autowired
-    ExampleCloudEventJsonFormat cloudEventJsonFormat;
+    protected ExampleCloudEventJsonFormat cloudEventJsonFormat;
 
     @Autowired
     protected ExampleCloudEventDataAccess cloudEventDataAccess;

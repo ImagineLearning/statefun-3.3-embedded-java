@@ -9,7 +9,7 @@ data "aws_region" "current" {}
 
 resource "aws_s3_bucket" "flink_demo_bucket" {
   # Bucket names must be globally unique, so I'm appending the account ID to workaround BucketAlreadyExists
-  bucket = "flink-demo-bucket-${data.aws_caller_identity.current.account_id}"
+  bucket = "flink-tf-demo-bucket-${data.aws_caller_identity.current.account_id}"
 }
 
 resource "aws_s3_bucket_ownership_controls" "flink_demo_bucket_ownership_controls" {
@@ -27,7 +27,7 @@ resource "aws_s3_bucket_acl" "flink_demo_bucket_acl" {
 }
 
 resource "aws_kinesis_stream" "flink_demo_ingress" {
-  name             = "flink-demo-ingress"
+  name             = "flink-tf-demo-ingress"
   shard_count      = 1
   retention_period = 24  # Retention period in hours
 
@@ -42,7 +42,7 @@ resource "aws_kinesis_stream" "flink_demo_ingress" {
 }
 
 resource "aws_kinesis_stream" "flink_demo_egress" {
-  name             = "flink-demo-egress"
+  name             = "flink-tf-demo-egress"
   shard_count      = 1
   retention_period = 24  # Retention period in hours
 
@@ -148,12 +148,12 @@ resource "aws_iam_role_policy" "flink_app_logs_policy" {
 }
 
 resource "aws_cloudwatch_log_group" "flink_demo_log_group" {
-  name              = "flink-demo-log-group"
+  name              = "flink-tf-demo-log-group"
   retention_in_days = 14
 }
 
 resource "aws_cloudwatch_log_stream" "flink_demo_log_stream" {
-  name           = "flink-demo-log-stream"
+  name           = "flink-tf-demo-log-stream"
   log_group_name = aws_cloudwatch_log_group.flink_demo_log_group.name
 }
 
@@ -174,7 +174,7 @@ resource "aws_iam_role_policy" "flink_app_metrics_policy" {
 
 # Reference: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kinesisanalyticsv2_application
 resource "aws_kinesisanalyticsv2_application" "flink_demo_tf" {
-  name                   = "flink_demo_tf"
+  name                   = "flink-tf-demo-application"
   runtime_environment    = "FLINK-1_18"
   service_execution_role = aws_iam_role.flink_application_role.arn
   application_mode = "STREAMING"
@@ -185,7 +185,7 @@ resource "aws_kinesisanalyticsv2_application" "flink_demo_tf" {
       code_content {
         s3_content_location {
           bucket_arn = aws_s3_bucket.flink_demo_bucket.arn
-          file_key   = "my-stateful-functions-embedded-java-3.3.0.jar"
+          file_key   = "my-stateful-functions-embedded-java-3.3.0.jar.1"
         }
       }
       code_content_type = "ZIPFILE"
@@ -210,7 +210,7 @@ resource "aws_kinesisanalyticsv2_application" "flink_demo_tf" {
     flink_application_configuration {
       checkpoint_configuration {
         configuration_type = "CUSTOM"
-        checkpoint_interval = 300000 # 5 mins * 60 secs/min * 1000 millis/sec
+        checkpoint_interval = 60000 # Every minute # Increase this to 300000 in production (every 5 minutes)
         checkpointing_enabled = true
       }
       monitoring_configuration {
@@ -238,5 +238,9 @@ resource "aws_kinesisanalyticsv2_application" "flink_demo_tf" {
   }
   cloudwatch_logging_options {
     log_stream_arn = aws_cloudwatch_log_stream.flink_demo_log_stream.arn
+  }
+
+  tags = {
+    ProvisionedBy = "Terraform"
   }
 }

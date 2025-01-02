@@ -150,7 +150,7 @@ branch, and build/install it locally via `mvn install`
 mvn package
 ```
 
-The demo can be provisioned in AWS in two ways... via CloudFormation or Crossplane
+The demo can be provisioned in AWS in three ways... via CloudFormation, Terraform, or Crossplane
 
 ### Provisioning via AWS CloudFormation
 
@@ -161,39 +161,46 @@ cd aws-cloudformation
 
 #### Create an S3 bucket and upload this project's JAR file
 
-To create the bucket, create a CloudFormation stack named `managed-flink-code-bucket` as defined [here](./aws-cloudformation/managed-flink-poc-bucket.yaml),
+To create the bucket, create a CloudFormation stack named `flink-cf-demo-bucket` as defined [here](./aws-cloudformation/flink-cf-demo-bucket-stack.yaml),
 and after that finishes, use the AWS CLI to upload the jar file:
 
 ```shell
 export AWS_ACCOUNT_ID=516535517513 # Imagine Learning Sandbox account
-aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar \
-          s3://managed-flink-poc-bucket-codebucket-${AWS_ACCOUNT_ID}/
+aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar s3://flink-cf-demo-bucket-${AWS_ACCOUNT_ID}/
 ```
 
 #### Create the Kinesis streams, Managed Flink application, and related AWS Resources
 
-Create a CloudFormation stack named `managed-flink-poc` as defined by the CloudFormation templates [here](./aws-cloudformation/managed-flink-poc.yaml).
+Create a CloudFormation stack named `flink-cf-demo` as defined by the CloudFormation templates [here](./aws-cloudformation/flink-cf-demo-stack.yaml).
 This stack includes a custom resource lambda that programmatically configures logging when the Flink application is created,
 and transitions the application from the Ready to Running state.
 
 
 #### Monitor the CloudWatch logging output
 
-```shell
-./poc-tail-logs.sh
-```
-This script will show all the log entries from the start of application launch, and will
-wait for new entries to arrive and display them too.  The script will resume from where it 
+The following script will show all the log entries from the start of application launch, and will
+wait for new entries to arrive and display them too.  The script will resume from where it
 left off if shut down via Ctrl-C.  To start from scratch, remove the `.cwlogs` directory.
+```shell
+./demo-tail-logs.sh
+```
+
 ### Send sample events to the ingress stream
 ```shell
-./poc-send-events.sh
+./demo-send-events.sh
 ```
 
 #### Get and display the events published to the egress stream
+This script will show all events published to the egress stream since the start of application launch, and will
+wait for new entries to arrive and display them too.
 ```shell
-./poc-get-events.sh
+./demo-tail-egress.sh
 ```
+#### Cleanup
+Cleanup by manually deleting the jar file from the S3 bucket and the ingress Kinesis stream.  Then delete the 
+Cloud Formation stacks. Cloud Formation will fail to delete a non-empty bucket, and fail to delete the ingress Kinesis 
+stream since Flink adds a fanout consumer to the stream which will block the deletion attempted by
+Cloud Formation.
 
 ### Provisioning via Terraform
 
@@ -207,23 +214,51 @@ cd aws-terraform
 terraform init
 terraform apply # When prompted, enter 'yes'
 ```
-Immediately after entering 'yes' to the prompt issued by `terraform apply`, switch to another shell/terminal tab and upload the application JAR file to the S3 bucket.  The upload may fail if the S3 bucket has not been created by Terraform yet, so keep trying until it succeeds.
+Immediately after entering 'yes' to the prompt issued by `terraform apply`, switch to another shell/terminal tab and 
+upload the application JAR file to the S3 bucket.  The upload may fail if the S3 bucket has not been created by 
+Terraform yet, so keep trying until it succeeds.
 
 ```shell
 export AWS_ACCOUNT_ID=516535517513 # Imagine Learning Sandbox account
 aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar \
           s3://flink-demo-bucket-${AWS_ACCOUNT_ID}/
 ```
+Wait for the `terraform apply` command to complete.
 
-Follow the directions near the end of the Crossplane section, below, regarding sending sample events.  Use the scripts in the `aws-crossplane` directory to send the sample input events, get the events written to the egress stream, and view the Flink application logging output.
+#### Monitor the CloudWatch logging output
 
-Cleanup by deleting the jar file from the S3 bucket, `flink-demo-bucket-${AWS_ACCOUNT_ID}` and running the command:
-
+The following script will show all the log entries from the start of application launch, and will
+wait for new entries to arrive and display them too.  The script will resume from where it
+left off if shut down via Ctrl-C.  To start from scratch, remove the `.cwlogs` directory.
 ```shell
-terraform destroy # When prompted, enter 'yes'
+./demo-tail-logs.sh
 ```
 
-The Kinesis stream `flink-demo-ingress` must be manually deleted since Flink adds a Fanout consumer to the stream, and the consumer will block deletion.
+#### Send sample events to the ingress stream
+```shell
+./demo-send-events.sh
+```
+
+#### Get and display the events published to the egress stream
+This script will show all events published to the egress stream since the start of application launch, and will
+wait for new entries to arrive and display them too.
+```shell
+./demo-tail-egress.sh
+```
+
+#### Cleanup
+Cleanup by manually deleting the jar file from the S3 bucket, `flink-demo-bucket-${AWS_ACCOUNT_ID}`, and the Kinesis 
+stream `flink-tf-demo-ingress`.  Run the `terraform destroy` command.  Note that the manual deletions are required 
+since Terraform can't delete a non-empty bucket, and can't delete the ingress stream since Flink adds a fanout consumer 
+to the stream which will block the deletion attempted by Terraform.
+
+Alternatively, you can run the following commands to clean up the resources:
+```shell
+export AWS_ACCOUNT_ID=516535517513 # Imagine Learning Sandbox account
+aws s3 rm --recursive s3://flink-tf-demo-bucket-${AWS_ACCOUNT_ID}/
+aws kinesis delete-stream --enforce-consumer-deletion --stream-name flink-tf-demo-ingress
+terraform destroy # When prompted, enter 'yes'
+```
 
 ### Provisioning via Crossplane
 
@@ -239,56 +274,20 @@ This demo of provisioning via Crossplane is nowhere near production quality.  It
 to provision and run an AWS Managed Flink application via crossplane.  Many tasks normally performed via CI/CD must be 
 completed manually as described below.  The crossplane compositions currently use `function-patch-and-transform` instead 
 of a custom composition function, and because of that, many things in the compositions remain hard-coded (AWS account 
-number, region, ARNs in IAM roles, etc).  In production systems, the lambda and related infrastructure that auto-starts 
-the Flink application probably only needs to be installed once per AWS account, and as such those resources should be 
-provisioned via a separate claim.  Also, see my note below regarding the creation of a CloudWatch log group for the lambda.
+number, region, ARNs in IAM roles, etc).  
 
 
 
 #### Instructions
 
 The files to run the crossplane demo are in the [aws-crossplane](./aws-crossplane) directory.
-
-Skip the instructions for using a lambda to start the Flink application.  Go to [here instead](#start-the-local-idp-configured-to-use-aws)
-
-##### Build the lambda handler package.  What? A lambda?
-
-> :warning: IMPORTANT: Using the lambda is optional and not recommended.
-
-> At one point it appeared that the managed resource for Flink wouldn't start the Flink application, and that like the CloudWatch 
-approach, a lambda is needed to handle events from the AWS resource and transition the application to the `Running` state. This
-is not actually the case, but support for the lambda is still included.  To use the lambda, it must be packaged and uploaded to the
-S3 bucket, and the managed flink claim must select the 'lambda' composition.
-
-> When using the [flink-lambda](./aws-crossplane/resources/flink/flink-lambda-comp.yaml) composition, 
-the [managed resource for creating AWS Managed Flink applications](https://marketplace.upbound.io/providers/upbound/provider-aws-kinesisanalyticsv2/v1.17.0/resources/kinesisanalyticsv2.aws.upbound.io/Application/v1beta1)
-will do most of the work to get the Flink application provisioned, and the application will
-become 'Ready' (not 'Running').  In this case, the lambda will
-invoke an API call to start the application.  This is in following with how it works when provisioning via CloudFormation.
-In CloudFormation though, the Lambda code can be inlined in a CloudFormation template, but in Crossplane the Lambda code must be
-referenced separately, e.g., via reference to the lambda package in an S3 file.
-
-> Build the lambda package by following [the instructions here](./aws-crossplane/start-flink-lambda/README.md).  The resulting Zip file will be
-uploaded to S3 later, as you follow the steps below.
-
-> The lambda will be provisioned along with AWS Managed Flink via a single claim, below.
-
-##### Create the CloudWatch log group for the lambda
-
-> :warning: OPTIONAL: Follow these instructions only if you are using the lambda to start the Flink application
-
-Login to AWS Identity Center and launch the web console for the Sandbox account.
-
-Confirm the existence of, and create if necessary, the CloudWatch log group `/aws/lambda/flink-demo-starter`. I can't
-figure out how to do this using the managed resource provided by `provider-aws-cloudwatchlogs` because the log group
-for the lambda must be named exactly that, the MR doesn't provide a way to set the name explicitly, and k8s/crossplane
-doesn't like the slashes in `metadata.name`.
-
-##### Start the local IDP configured to use AWS
 ```
 cd aws-crossplane
 ```
-Login to AWS Identity Center, and copy the AWS environment variable commands from the IL Sandbox account, Access Keys page.
+
+##### Start the local IDP configured to use AWS
+
+Login to AWS Identity Center, and copy the AWS credential environment variables commands from Access Keys page.
 
 Paste and execute the AWS environment variable commands, then run this script:
 
@@ -299,10 +298,11 @@ Paste and execute the AWS environment variable commands, then run this script:
 Launch the local IDP using idpbuilder (https://github.com/cnoe-io/idpbuilder)
 
 ```
-idpbuilder create -p ./local/aws
+idpbuilder create -p ./cloud/aws
 ```
 
-The `idpbuilder create` command takes a few minutes to complete, and even then it will take more time for crossplane to start and the providers to be loaded.
+The `idpbuilder create` command takes a few minutes to complete, and even then it will take more time for crossplane to 
+start and the providers to be loaded.
 
 Wait for the AWS providers to finish loading...
 
@@ -313,13 +313,15 @@ kubectl -n crossplane-system get pods | grep provider-aws
 Wait until the command above returns a list of pods all in the `Running` state.
 
 ##### Install the Crossplane resources (XRDs and Compositions)
-Install the Composite Resource Definitions and Compositions required by the demo. Ignore the warnings issued by the following command:
+Install the Composite Resource Definitions and Compositions required by the demo. Ignore the warnings issued by the 
+following command:
 
 ```
 for i in $(find resources -name \*xrd.yaml -o -name \*comp.yaml); do k apply -f $i; done
 ```
 
-At the time of this writing the demo does not utilize a custom composition function.  Instead, it uses the off-the-shelf function `function-patch-and-transform` which gets loaded during IDP creation, above.
+At the time of this writing the demo does not utilize a custom composition function.  Instead, it uses the off-the-shelf 
+function `function-patch-and-transform` which gets loaded during IDP creation, above.
 
 ##### Provision AWS Managed Flink via Crossplane claims
 
@@ -334,57 +336,70 @@ kubectl get managed
 ```
 The output of `kubectl get managed` will reveal the actual S3 bucket name under `EXTERNAL-NAME`.
 
-Return to AWS Identity Center and launch the web console for the Sandbox account.
+Return to AWS Identity Center and launch the web console for the account.
 
-Visit the S3 services page.  Find the S3 bucket (flink-demo-bucket-*) and upload the following files to the bucket
+Visit the S3 services page.  Find the S3 bucket (flink-demo-bucket-*) and upload the following file to the bucket
 - `../target/my-stateful-functions-embedded-java-3.3.0.jar` (Flink demo application code)
-- `start-flink-lambda/start_flink_py.zip` (Optional, lambda handler code which transitions the Managed Flink instance to the 'Running' state)
 
-Alternatively, use the AWS CLI to upload the files...
+Alternatively, use the AWS CLI to upload the file...
 ```
 flink_bucket_name=$(kubectl get managed | grep bucket | awk '{print $4}')
-aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar s3://${flink_bucket_name}/my-stateful-functions-embedded-java-3.3.0.jar
-
-# If using the lambda to start the Flink application, upload the lambda package
-aws s3 cp start-flink-lambda/start_flink_py.zip s3://${flink_bucket_name}/start_flink_py.zip
+aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar s3://${flink_bucket_name}/
 ```
 
 ##### Provision the Managed Flink application  
 
-Applying the following claim will trigger the creation of the Flink application, its role, and log groups.  Note that by default Flink application will become 'Ready' since `startApplication: true` is commented-out in the claim.  
-
-To use the lambda to start the Flink application, update the file `claims/managed-flink-claim.yaml` and change the value for `appReadyHandler` to `lambda`.
+Apply the following claim to trigger the creation of the Flink application, its role, and log groups.  Note that by 
+default Flink application will become 'Ready' since `startApplication: true` is commented-out in the claim.  Do not
+uncomment this line yet.
 
 ```
 kubectl apply -f claims/managed-flink-claim.yaml
 ```
 
-If using the lambda to start the Flink application, no further action should be required.  Otherwise, visit the AWS Managed Flink applications page in the web console.  When the application statis is `Ready`, then uncomment the `startAppication: true` line in the `managed-flink-claim.yaml` file and re-run the `kubectl apply -f claims/managed-flink-claim.yaml` command.  If the initial claim apply is performed with `startApplication: true` then Crossplane appears to go into a loop where it updates the application every few minutes, and so it switches back and forth between `Running` and `Updating` :(
+Visit the AWS Managed Flink applications page in the web console.  When the application status becomes `Ready`, 
+uncomment the `startAppication: true` line in the `managed-flink-claim.yaml` file and re-run 
+the `kubectl apply -f claims/managed-flink-claim.yaml` command.  If the initial claim apply is performed 
+with `startApplication: true` then Crossplane appears to go into a loop where it updates the application every few 
+minutes, and so it switches back and forth between `Running` and `Updating` :(
 
 
-Wait until the Flink application is in the 'Running' state, then execute the following commands to send events and see the results:
+Wait until the Flink application is in the 'Running' state. This may take a few minutes.
 
+#### Monitor the CloudWatch logging output
+
+The following script will show all the log entries from the start of application launch, and will
+wait for new entries to arrive and display them too.  The script will resume from where it
+left off if shut down via Ctrl-C.  To start from scratch, remove the `.cwlogs` directory.
+```shell
+./demo-tail-logs.sh
 ```
-# Send the test events
-./poc-send-events.sh
 
-# Fetch and display the results from the egress stream
-./poc-get-events.sh
+#### Send sample events to the ingress stream
+```shell
+./demo-send-events.sh
+```
+
+#### Get and display the events published to the egress stream
+This script will show all events published to the egress stream since the start of application launch, and will
+wait for new entries to arrive and display them too.
+```shell
+./demo-tail-egress.sh
 ```
 
 #### Cleanup
 
+Manually delete the files in the S3 bucket, and delete the Kinesis stream `flink-demo-ingress` (the Flink application 
+adds a fanout consumer to the stream which will block any deletion attempted by Crossplane).
+
+Run the following commands to delete the remaining resources:
 ```
 kubectl delete -f resources/claims/managed-flink-claims.yaml
 kubectl delete -f resources/claims/demo-setup-claims.yaml
 ```
 
-Visit the S3 bucket in the web console and delete the files in the bucket.  Having issued the `kubectl delete` command on the demo setup claims will trigger the bucket to be deleted automatically soon after it is emptied.
-
 Shut down the local IDP with the command:
 ```
 idpbuilder delete
 ```
-
-Manually remove the CloudWatch log group `/aws/lambda/flink-demo-starter`.
 

@@ -2,9 +2,9 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: flinklambdastart.kellinwood.com
+  name: flinkbasic.kellinwood.com
   labels:
-    appReadyHandler: lambda
+    appReadyHandler: none
 spec:
   compositeTypeRef:
     apiVersion: kellinwood.com/v1alpha1
@@ -47,7 +47,7 @@ spec:
                             AWS_REGION: us-west-1
                   flinkApplicationConfiguration:
                     - checkpointConfiguration:
-                      - checkpointInterval: 300000 # 5 mins * 60 secs/min * 1000 millis/sec
+                      - checkpointInterval: 60000 # every minute # Update to 5 mins for production
                         checkpointingEnabled: true
                         configurationType: CUSTOM
                       monitoringConfiguration:
@@ -95,6 +95,9 @@ spec:
             fromFieldPath: spec.resourceConfig.runtime
             toFieldPath: spec.forProvider.runtimeEnvironment
           - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.startApplication
+            toFieldPath: spec.forProvider.startApplication
+          - type: FromCompositeFieldPath
             fromFieldPath: spec.resourceConfig.parallelism
             toFieldPath: spec.forProvider.applicationConfiguration[0].flinkApplicationConfiguration[0].parallelismConfiguration[0].parallelism
           - type: FromCompositeFieldPath
@@ -117,7 +120,7 @@ spec:
             annotations:
               meta.upbound.io/example-id: iam/v1beta1/role
             labels:
-              rolePurpose: flink-application
+              rolePurpose: flink-application              
             name: example
           spec:
             forProvider:
@@ -147,8 +150,8 @@ spec:
                         {
                           "Effect": "Allow",
                           "Resource": [
-                            "arn:aws:kinesis:us-east-2:516535517513:stream/flink-demo-ingress",
-                            "arn:aws:kinesis:us-east-2:516535517513:stream/flink-demo-egress"
+                            "arn:aws:kinesis:us-east-2:516535517513:stream/flink-cp-demo-ingress",
+                            "arn:aws:kinesis:us-east-2:516535517513:stream/flink-cp-demo-egress"
                           ],
                           "Action": [
                             "kinesis:DescribeStream",
@@ -167,7 +170,7 @@ spec:
                         {
                           "Effect": "Allow",
                           "Resource": [
-                            "arn:aws:logs:us-east-2:516535517513:log-group:flink-demo-app-log-group"
+                            "arn:aws:logs:us-east-2:516535517513:log-group:flink-cp-demo-log-group"
                           ],
                           "Action": [
                             "logs:DescribeLogGroups",
@@ -224,7 +227,7 @@ spec:
               - type: string
                 string:
                   type: Format
-                  fmt: "%s-app-log-group"
+                  fmt: "%s-log-group"
       - name: log-stream
         base:
           apiVersion: cloudwatchlogs.aws.upbound.io/v1beta1
@@ -249,7 +252,7 @@ spec:
               - type: string
                 string:
                   type: Format
-                  fmt: "%s-app-log-stream"
+                  fmt: "%s-log-stream"
           - type: FromCompositeFieldPath
             fromFieldPath: spec.resourceConfig.name
             toFieldPath: spec.forProvider.name
@@ -257,207 +260,5 @@ spec:
               - type: string
                 string:
                   type: Format
-                  fmt: "%s-app-log-stream"   
-      - name: starter-lambda
-        base:
-          apiVersion: lambda.aws.upbound.io/v1beta1
-          kind: Function
-          metadata:
-            annotations:
-              meta.upbound.io/example-id: lambda/v1beta1/function
-            name: example
-          spec:
-            forProvider:
-              handler: start_flink.lambda_handler
-              packageType: Zip
-              region: us-east-2
-              roleSelector:
-                matchLabels:
-                  rolePurpose: starter-lambda
-              runtime: python3.10
-              s3BucketSelector:
-                matchLabels:
-                  crossplane.io/claim-name: flink-demo-bucket
-              s3Key: start_flink_py.zip
-              timeout: 60
-            providerConfigRef:
-              name: provider-aws
-        patches:
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.resourceConfig.name
-            toFieldPath: metadata.name
-            transforms:
-              - type: string
-                string:
-                  type: Format
-                  fmt: "%s-starter"
-      - name: starter-lambda-role
-        base:
-          apiVersion: iam.aws.upbound.io/v1beta1
-          kind: Role
-          metadata:
-            annotations:
-              meta.upbound.io/example-id: iam/v1beta1/role
-            labels:
-              rolePurpose: starter-lambda
-            name: example
-          spec:
-            forProvider:
-              assumeRolePolicy: |
-                {
-                  "Version": "2012-10-17",
-                  "Statement": [
-                    {
-                      "Effect": "Allow",
-                      "Principal": {
-                        "Service": "lambda.amazonaws.com"
-                      },
-                      "Action": "sts:AssumeRole"
-                    }
-                  ]
-                }
-              inlinePolicy:
-              - name: flink_permissions
-                policy: |-
-                  {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                      {
-                        "Effect": "Allow",
-                        "Resource": [
-                          "arn:aws:kinesisanalytics:us-east-2:516535517513:application/flink-demo-application"
-                        ],
-                        "Action": [
-                          "kinesisanalytics:DescribeApplication",
-                          "kinesisanalytics:StartApplication"
-                        ]
-                      }
-                    ]
-                  }
-              managedPolicyArns:
-              - arn:aws:iam::aws:policy/AmazonKinesisFullAccess
-              - arn:aws:iam::aws:policy/CloudWatchFullAccess
-            providerConfigRef:
-              name: provider-aws
-        patches:
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.resourceConfig.name
-            toFieldPath: metadata.name
-            transforms:
-              - type: string
-                string:
-                  type: Format
-                  fmt: "%s-starter-role"
-      - name: starter-lambda-invoke-perms
-        base:
-          apiVersion: lambda.aws.upbound.io/v1beta1
-          kind: Permission
-          metadata:
-            annotations:
-              meta.upbound.io/example-id: lambda/v1beta1/permission
-            name: example-starter-permission
-          spec:
-            forProvider:
-              action: lambda:InvokeFunction
-              functionNameSelector: 
-                matchControllerRef: true
-              principal: events.amazonaws.com
-              region: us-east-2
-              sourceArn: arn:aws:events:us-east-2:516535517513:rule/example-eventbridge-rule
-              statementId: example-starter-permission
-            providerConfigRef:
-              name: provider-aws
-        patches:
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.resourceConfig.name
-            toFieldPath: metadata.name
-            transforms:
-              - type: string
-                string:
-                  type: Format
-                  fmt: "%s-starter-permission"
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.resourceConfig.name
-            toFieldPath: spec.forProvider.statementId
-            transforms:
-              - type: string
-                string:
-                  type: Format
-                  fmt: "%s-starter-permission"
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.resourceConfig.name
-            toFieldPath: spec.forProvider.sourceArn
-            transforms:
-              - type: string
-                string:
-                  type: Format
-                  fmt: "arn:aws:events:us-east-2:516535517513:rule/%s-eventbridge-rule"
-      - name: eventbridge-rule
-        base:
-          apiVersion: cloudwatchevents.aws.upbound.io/v1beta1
-          kind: Rule
-          metadata:
-            annotations:
-              meta.upbound.io/example-id: cloudwatchevents/v1beta2/rule
-            name: example-eventbridge-rule
-          spec:
-            forProvider:
-              description: Process Managed Flink events
-              eventBusName: default
-              eventPattern: |
-                {
-                  "source": ["aws.kinesisanalytics"]
-                }
-              region: us-east-2
-            providerConfigRef:
-              name: provider-aws
-        patches:
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.resourceConfig.name
-            toFieldPath: metadata.name
-            transforms:
-              - type: string
-                string:
-                  type: Format
-                  fmt: "%s-eventbridge-rule"
-      - name: eventbridge-target
-        base:  
-          apiVersion: cloudwatchevents.aws.upbound.io/v1beta1
-          kind: Target
-          metadata:
-            name: example
-          spec:
-            forProvider:
-              arn: example
-              eventBusName: default
-              region: us-east-2
-              ruleSelector:
-                matchControllerRef: true
-              targetId: example
-            providerConfigRef:
-              name: provider-aws
-        patches:
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.resourceConfig.name
-            toFieldPath: metadata.name
-            transforms:
-              - type: string
-                string:
-                  type: Format
-                  fmt: "%s-eventbridge-target"
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.resourceConfig.name
-            toFieldPath: spec.forProvider.targetId
-            transforms:
-              - type: string
-                string:
-                  type: Format
-                  fmt: "%s-eventbridge-target"
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.resourceConfig.name
-            toFieldPath: spec.forProvider.arn
-            transforms:
-              - type: string
-                string:
-                  type: Format
-                  fmt: "arn:aws:lambda:us-east-2:516535517513:function:%s-starter"                  
+                  fmt: "%s-log-stream"
+ 

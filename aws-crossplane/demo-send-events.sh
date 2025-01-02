@@ -3,7 +3,7 @@
 set -e
 MD5CMD=md5
 
-stream_name=$(aws kinesis list-streams | jq -crM .StreamNames[] | grep flink-demo-ingress)
+stream_name=$(aws kinesis list-streams | jq -crM .StreamNames[] | grep flink-cp-demo-ingress)
 if [ -z "$stream_name" ]; then
   echo "Stream not found"
   exit 1
