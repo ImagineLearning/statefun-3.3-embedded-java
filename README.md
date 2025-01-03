@@ -11,9 +11,9 @@ The purpose of this project is two-fold.
       [Caliper](https://www.imsglobal.org/spec/caliper/v1p2) events.
     * This project egresses results as events to a separate stream, whereas at Imagine Learning we mostly send our 
       results directly to OpenSearch and occasionally write events back to the ingress stream.
- 2. It will serve as the basis for an evaluation of Stateful Functions running on 
+ 2. It serves as the basis for an evaluation of Stateful Functions running on 
     [AWS Managed Flink](https://docs.aws.amazon.com/managed-flink/).  At the time of
-    this writing Imagine Learning runs stateful functions on self-managed Kubernetes clusters, but we are looking to
+    this writing Imagine Learning runs Flink Stateful Functions on self-managed Kubernetes clusters, but we are looking to
     see if AWS Managed Flink is a viable alternative.
 
 
@@ -23,7 +23,8 @@ This project demonstrates stateful functions under test in various ways:
   * run-time execution in standalone job mode via docker compose
 
 
-The project implements embedded functions (functions that execute in the Flink taskmanagers).  Remote functions are future work.
+The project implements embedded functions (functions that execute in the Flink taskmanagers).  Remote functions are 
+future work.
 
 This is an opinionated project.  It uses...
   * Spring Framework for dependency injection
@@ -38,7 +39,7 @@ This is an opinionated project.  It uses...
     Each forwarder is small piece of code that routes one or more specific event types
     to a stateful function.  To start routing a new event type, just implement another Forwarder.
 
-## What this Stateful Functions appication does
+## What this Stateful Functions application does
 Example events and functions are provided which demonstrate notifying a shopping cart service of 
 product price and availability changes for items in users' carts.  The project assumes the 
 existence of upstream microservices that send Product events (name,price,availability) and
@@ -98,7 +99,7 @@ building and installing Apache Flink Stateful Functions compatible with Flink 1.
 ./mvnw test
 ```
 
-## Running the project via Docker Compose
+## Running the project locally via Docker Compose
 
 Follow the instructions below to run the project via Docker Compose.  Note that Kinesis support is provided
 by a [localstack](https://www.localstack.cloud/) container.
@@ -138,7 +139,7 @@ docker compose --profile all down
 ### Version compatibility between AWS Managed Flink and Stateful Functions
 
 The latest release of Apache Flink Stateful Functions is 3.3, but its compiled and built 
-to run with Flink 1.16.2.  AWS Managed Flink supports Flink versions 1.15 and 1.18.  So the first
+to run with Flink 1.16.2.  AWS Managed Flink currently supports Flink versions 1.15 and 1.18.  So the first
 step towards running via AWS Managed Flink is to create a version of the stateful functions library 
 compatible with Flink 1.18.  The required changes are provided here: 
 https://github.com/kellinwood/flink-statefun/pull/1/files.  
@@ -221,7 +222,7 @@ Terraform yet, so keep trying until it succeeds.
 ```shell
 export AWS_ACCOUNT_ID=516535517513 # Imagine Learning Sandbox account
 aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar \
-          s3://flink-demo-bucket-${AWS_ACCOUNT_ID}/
+          s3://flink-tf-demo-bucket-${AWS_ACCOUNT_ID}/
 ```
 Wait for the `terraform apply` command to complete.
 
@@ -247,7 +248,7 @@ wait for new entries to arrive and display them too.
 ```
 
 #### Cleanup
-Cleanup by manually deleting the jar file from the S3 bucket, `flink-demo-bucket-${AWS_ACCOUNT_ID}`, and the Kinesis 
+Cleanup by manually deleting the jar file from the S3 bucket, `flink-tf-demo-bucket-${AWS_ACCOUNT_ID}`, and the Kinesis 
 stream `flink-tf-demo-ingress`.  Run the `terraform destroy` command.  Note that the manual deletions are required 
 since Terraform can't delete a non-empty bucket, and can't delete the ingress stream since Flink adds a fanout consumer 
 to the stream which will block the deletion attempted by Terraform.
@@ -271,10 +272,10 @@ terraform destroy # When prompted, enter 'yes'
 
 #### Introduction
 This demo of provisioning via Crossplane is nowhere near production quality.  It merely demonstrates that it is possible 
-to provision and run an AWS Managed Flink application via crossplane.  Many tasks normally performed via CI/CD must be 
-completed manually as described below.  The crossplane compositions currently use `function-patch-and-transform` instead 
-of a custom composition function, and because of that, many things in the compositions remain hard-coded (AWS account 
-number, region, ARNs in IAM roles, etc).  
+to provision and run an AWS Managed Flink application via Crossplane.  Many tasks normally performed via CI/CD must be 
+completed manually as described below.  The compositions currently use `function-patch-and-transform` instead of a custom 
+composition function, and many things in the compositions remain hard-coded (AWS account number, region, ARNs in IAM 
+roles, etc).  
 
 
 
@@ -338,7 +339,7 @@ The output of `kubectl get managed` will reveal the actual S3 bucket name under 
 
 Return to AWS Identity Center and launch the web console for the account.
 
-Visit the S3 services page.  Find the S3 bucket (flink-demo-bucket-*) and upload the following file to the bucket
+Visit the S3 services page.  Find the S3 bucket (flink-cp-demo-bucket-*) and upload the following file to the bucket
 - `../target/my-stateful-functions-embedded-java-3.3.0.jar` (Flink demo application code)
 
 Alternatively, use the AWS CLI to upload the file...
