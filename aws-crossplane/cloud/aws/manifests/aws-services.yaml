@@ -43,22 +43,3 @@ spec:
   package: xpkg.upbound.io/upbound/provider-aws-cloudwatchlogs:v1.17.0
   controllerConfigRef:
     name: aws-config
----
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: provider-aws-cloudwatchevents
-spec:
-  package: xpkg.upbound.io/upbound/provider-aws-cloudwatchevents:v1.17.0
-  controllerConfigRef:
-    name: aws-config
----    
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: provider-aws-lambda
-  namespace: crossplane-system
-spec:
-  package: xpkg.upbound.io/upbound/provider-aws-lambda:v1.17.0
-  controllerConfigRef:
-    name: aws-config
