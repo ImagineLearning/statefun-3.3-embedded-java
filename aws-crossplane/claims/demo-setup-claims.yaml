@@ -1,5 +1,5 @@
 ---
-apiVersion: kellinwood.com/v1alpha1
+apiVersion: example.com/v1alpha1
 kind: S3Bucket
 metadata:
   name: flink-cp-demo-bucket
@@ -8,7 +8,7 @@ spec:
   resourceConfig:
     region: us-east-2
 ---
-apiVersion: kellinwood.com/v1alpha1
+apiVersion: example.com/v1alpha1
 kind: KinesisStream
 metadata:
   name: flink-cp-demo-ingress
@@ -24,7 +24,7 @@ spec:
       createdBy: ken.ellinwood@imaginelearning.com
       purpose: statefun-ingress
 ---
-apiVersion: kellinwood.com/v1alpha1
+apiVersion: example.com/v1alpha1
 kind: KinesisStream
 metadata:
   name: flink-cp-demo-egress

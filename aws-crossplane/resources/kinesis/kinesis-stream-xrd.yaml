@@ -1,9 +1,9 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xkinesisstreams.kellinwood.com
+  name: xkinesisstreams.example.com
 spec:
-  group: kellinwood.com
+  group: example.com
   names:
     kind: XKinesisStream
     plural: xkinesisstreams

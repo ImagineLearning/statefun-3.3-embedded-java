@@ -1,9 +1,9 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xmanagedflinks.kellinwood.com
+  name: xmanagedflinks.example.com
 spec:
-  group: kellinwood.com
+  group: example.com
   names:
     kind: XManagedFlink
     plural: xmanagedflinks

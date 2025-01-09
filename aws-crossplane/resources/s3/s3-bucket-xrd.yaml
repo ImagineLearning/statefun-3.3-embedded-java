@@ -1,9 +1,9 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xs3buckets.kellinwood.com
+  name: xs3buckets.example.com
 spec:
-  group: kellinwood.com
+  group: example.com
   names:
     kind: XS3Bucket
     plural: xs3buckets

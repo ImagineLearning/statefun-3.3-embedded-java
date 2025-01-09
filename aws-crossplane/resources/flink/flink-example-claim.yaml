@@ -1,4 +1,4 @@
-apiVersion: kellinwood.com/v1alpha1
+apiVersion: example.com/v1alpha1
 kind: ManagedFlink
 metadata:
   name: flink-demo

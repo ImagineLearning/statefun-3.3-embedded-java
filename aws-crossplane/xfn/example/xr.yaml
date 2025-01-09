@@ -1,0 +1,22 @@
+apiVersion: example.com/v1alpha1
+kind: XManagedFlink
+metadata:
+  name: flink-example-nkhnm
+spec:
+  claimRef:
+    apiVersion: example.com/v1alpha1
+    kind: ManagedFlink
+    name: flink-example
+    namespace: default
+  resourceConfig:
+    region: us-east-2
+    codeBucket: flink-example-bucket
+    codeFile: example-flink-app-1.0-SNAPSHOT.jar
+    environmentProperties:
+    - propertyGroup:
+      - propertyGroupId: MyApplicationProperties
+        propertyMap:
+          EVENTS_EGRESS_STREAM_DEFAULT: example-egress-kinesis-stream
+          EVENTS_INGRESS_STREAM_DEFAULT: example-ingress-kinesis-stream
+    name: flink-example
+    parallelism: 1

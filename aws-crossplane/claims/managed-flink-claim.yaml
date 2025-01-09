@@ -1,4 +1,4 @@
-apiVersion: kellinwood.com/v1alpha1
+apiVersion: example.com/v1alpha1
 kind: ManagedFlink
 metadata:
   name: flink-cp-demo
@@ -10,7 +10,7 @@ spec:
     codeBucket: flink-cp-demo-bucket
     codeFile: my-stateful-functions-embedded-java-3.3.0.jar
     runtime: FLINK-1_18
-    # startApplication: true
+    startApplication: true
     parallelism: 1
     environmentProperties:
       - propertyGroup:

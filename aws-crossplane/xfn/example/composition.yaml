@@ -1,0 +1,16 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: function-managed-flink
+spec:
+  compositeTypeRef:
+    apiVersion: example.crossplane.io/v1
+    kind: XR
+  mode: Pipeline
+  pipeline:
+  - step: run-the-function
+    functionRef:
+      name: function-managed-flink
+    input:
+      apiVersion: template.fn.crossplane.io/v1beta1
+      kind: Input

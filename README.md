@@ -293,13 +293,13 @@ Login to AWS Identity Center, and copy the AWS credential environment variables 
 Paste and execute the AWS environment variable commands, then run this script:
 
 ```
-./cloud/aws/update_credentials.sh
+./local/aws/update_credentials.sh
 ```
 
 Launch the local IDP using idpbuilder (https://github.com/cnoe-io/idpbuilder)
 
 ```
-idpbuilder create -p ./cloud/aws
+idpbuilder create -p ./local/aws
 ```
 
 The `idpbuilder create` command takes a few minutes to complete, and even then it will take more time for crossplane to 

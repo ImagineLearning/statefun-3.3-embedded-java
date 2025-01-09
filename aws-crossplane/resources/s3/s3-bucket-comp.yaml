@@ -2,10 +2,10 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: s3buckets.kellinwood.com
+  name: s3buckets.example.com
 spec:
   compositeTypeRef:
-    apiVersion: kellinwood.com/v1alpha1
+    apiVersion: example.com/v1alpha1
     kind: XS3Bucket
   mode: Pipeline
   pipeline:
