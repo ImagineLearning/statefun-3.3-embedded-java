@@ -14,18 +14,11 @@ spec:
       key: creds
   endpoint:
     services:
-      - dynamodb
       - iam
-      - lambda
       - s3
-      - sqs
-      - sns
       - kinesis
-      - firehose
       - cloudwatch
       - logs
-      - secretsmanager
-      - eventbridge
       - kinesisanalyticsv2
     hostnameImmutable: true
     url:

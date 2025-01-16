@@ -10,13 +10,38 @@ spec:
     namespace: default
   resourceConfig:
     region: us-east-2
+    account: "000000000000"
     codeBucket: flink-example-bucket
     codeFile: example-flink-app-1.0-SNAPSHOT.jar
+    additionalPermissions:
+      managedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonKinesisFullAccess"
+      inlinePolicies:
+        - name: kinesis_policy
+          policy: |
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Resource": [
+                    "arn:aws:kinesis:us-east-2:000000000000:stream/flink-demo-ingress",
+                    "arn:aws:kinesis:us-east-2:000000000000:stream/flink-demo-egress"
+                  ],
+                  "Action": [
+                    "kinesis:DescribeStream",
+                    "kinesis:GetRecords",
+                    "kinesis:GetShardIterator",
+                    "kinesis:ListShards",
+                    "kinesis:PutRecord"
+                  ]
+                }
+              ]
+            }    
     environmentProperties:
     - propertyGroup:
       - propertyGroupId: MyApplicationProperties
         propertyMap:
           EVENTS_EGRESS_STREAM_DEFAULT: example-egress-kinesis-stream
-          EVENTS_INGRESS_STREAM_DEFAULT: example-ingress-kinesis-stream
-    name: flink-example
+          EVENTS_INGRESS_STREAM_DEFAULT: example-ingress-kinesis-stream   
     parallelism: 1

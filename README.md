@@ -268,15 +268,11 @@ terraform destroy # When prompted, enter 'yes'
 - idpbuilder (https://github.com/cnoe-io/idpbuilder)
 - kubectl
 - jq
-- python3
 
 #### Introduction
-This demo of provisioning via Crossplane is nowhere near production quality.  It merely demonstrates that it is possible 
-to provision and run an AWS Managed Flink application via Crossplane.  Many tasks normally performed via CI/CD must be 
-completed manually as described below.  The compositions currently use `function-patch-and-transform` instead of a custom 
-composition function, and many things in the compositions remain hard-coded (AWS account number, region, ARNs in IAM 
-roles, etc).  
-
+This demodemonstrates that it is possible to provision and run an AWS Managed Flink application via Crossplane.  Many 
+tasks normally performed via CI/CD must be completed manually as described below.  The compositions for S3 buckets and 
+Kinesis streams currently use `function-patch-and-transform`, but the Managed Flink composition uses a custom function.
 
 
 #### Instructions
@@ -286,43 +282,29 @@ The files to run the crossplane demo are in the [aws-crossplane](./aws-crossplan
 cd aws-crossplane
 ```
 
-##### Start the local IDP configured to use AWS
+##### Update the AWS credentials in the local environment
 
 Login to AWS Identity Center, and copy the AWS credential environment variables commands from Access Keys page.
 
-Paste and execute the AWS environment variable commands, then run this script:
+Paste and execute the AWS environment variable commands.
 
-```
+Set the AWS_ACCOUNT environment variable to your AWS account number, or run `aws configure sso` / `aws sso login`.
+Setting the account number explicitly is optional if it can be determined instead via `aws sts get-caller-identity`.
+
+Finally, run the following script to update the AWS credentials for the local environment:
+```shell
 ./local/aws/update_credentials.sh
 ```
 
-Launch the local IDP using idpbuilder (https://github.com/cnoe-io/idpbuilder)
+##### Launch and configure a Kubernetes cluster using the "idpbuilder" tool
 
-```
-idpbuilder create -p ./local/aws
-```
+Run `./launch-and-config-idp.sh`
 
-The `idpbuilder create` command takes a few minutes to complete, and even then it will take more time for crossplane to 
-start and the providers to be loaded.
+This script will launch a local Kubernetes cluster using `kind`, and configure the cluster with the necessary
+Crossplane providers and resources.  It also builds and uploads the docker image for the Managed Flink composition
+function. 
 
-Wait for the AWS providers to finish loading...
-
-```
-kubectl -n crossplane-system get pods | grep provider-aws
-```
-
-Wait until the command above returns a list of pods all in the `Running` state.
-
-##### Install the Crossplane resources (XRDs and Compositions)
-Install the Composite Resource Definitions and Compositions required by the demo. Ignore the warnings issued by the 
-following command:
-
-```
-for i in $(find resources -name \*xrd.yaml -o -name \*comp.yaml); do k apply -f $i; done
-```
-
-At the time of this writing the demo does not utilize a custom composition function.  Instead, it uses the off-the-shelf 
-function `function-patch-and-transform` which gets loaded during IDP creation, above.
+The script takes a few minutes to complete.
 
 ##### Provision AWS Managed Flink via Crossplane claims
 

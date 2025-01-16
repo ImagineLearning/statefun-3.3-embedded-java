@@ -6,7 +6,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-//	"google.golang.org/protobuf/testing/protocmp"
+
+	//	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
@@ -52,9 +53,21 @@ func TestRunFunction(t *testing.T) {
 								"spec": {
 									"resourceConfig": {
 										"region": "us-east-2",
+										"account": "000000000000",
 										"name": "flink-test",
 										"codeBucket": "flink-test-bucket",
 										"codeFile": "flink-test-app.jar",
+										"additionalPermissions": {
+											"managedPolicyArns": [
+												"arn:aws:iam::aws:policy/AmazonKinesisFullAccess"
+											],
+											"inlinePolicies": [
+											    {
+											        "name": "kinesis_policy",
+          											"policy": "            {\n              \"Version\": \"2012-10-17\",\n              \"Statement\": [\n                {\n                  \"Effect\": \"Allow\",\n                  \"Resource\": [\n                    \"arn:aws:kinesis:us-east-2:516535517513:stream/flink-cp-demo-ingress\",\n                    \"arn:aws:kinesis:us-east-2:516535517513:stream/flink-cp-demo-egress\"\n                  ],\n                  \"Action\": [\n                    \"kinesis:DescribeStream\",\n                    \"kinesis:GetRecords\",\n                    \"kinesis:GetShardIterator\",\n                    \"kinesis:ListShards\",\n                    \"kinesis:PutRecord\"\n                  ]\n                }\n              ]\n            }\n"
+						                        }
+											]
+										},
 										"environmentProperties": [{
 											"propertyGroup": [{
 												"propertyGroupId": "StatefunApplicationProperties",
@@ -103,7 +116,7 @@ func TestRunFunction(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			f := &Function{log: logging.NewNopLogger()}
-			_,/*rsp,*/ err := f.RunFunction(tc.args.ctx, tc.args.req)
+			_ /*rsp,*/, err := f.RunFunction(tc.args.ctx, tc.args.req)
 
 			// if diff := cmp.Diff(tc.want.rsp, rsp, protocmp.Transform()); diff != "" {
 			// 	t.Errorf("%s\nf.RunFunction(...): -want rsp, +got rsp:\n%s", tc.reason, diff)

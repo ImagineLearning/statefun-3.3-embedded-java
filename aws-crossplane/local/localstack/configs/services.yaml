@@ -35,19 +35,3 @@ metadata:
   namespace: crossplane-system
 spec:
   package: xpkg.upbound.io/upbound/provider-aws-kinesisanalyticsv2:v1.17.0
----
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: provider-aws-cloudwatchevents
-  namespace: crossplane-system
-spec:
-  package: xpkg.upbound.io/upbound/provider-aws-cloudwatchevents:v1.17.0
----
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: provider-aws-lambda
-  namespace: crossplane-system
-spec:
-  package: xpkg.upbound.io/upbound/provider-aws-lambda:v1.17.0  

@@ -8,6 +8,17 @@ spec:
     kind: XR
   mode: Pipeline
   pipeline:
+  - step: environment-configs
+    functionRef:
+      name: function-environment-configs
+    input:
+      apiVersion: environmentconfigs.fn.crossplane.io/v1beta1
+      kind: Input
+      spec:
+        environmentConfigs:
+          - type: Reference
+            ref:
+              name: aws-env-config
   - step: run-the-function
     functionRef:
       name: function-managed-flink

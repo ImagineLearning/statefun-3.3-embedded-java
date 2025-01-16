@@ -5,17 +5,37 @@ metadata:
   namespace: default
 spec:
   resourceConfig:
-    region: us-east-2
-    name: flink-cp-demo
+    startApplication: true
     codeBucket: flink-cp-demo-bucket
     codeFile: my-stateful-functions-embedded-java-3.3.0.jar
-    runtime: FLINK-1_18
-    startApplication: true
-    parallelism: 1
+    additionalPermissions:
+      managedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonKinesisFullAccess"
+      inlinePolicies:
+        - name: kinesis_policy
+          policy: |
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Resource": [
+                    "arn:aws:kinesis:us-east-2:516535517513:stream/flink-cp-demo-ingress",
+                    "arn:aws:kinesis:us-east-2:516535517513:stream/flink-cp-demo-egress"
+                  ],
+                  "Action": [
+                    "kinesis:DescribeStream",
+                    "kinesis:GetRecords",
+                    "kinesis:GetShardIterator",
+                    "kinesis:ListShards",
+                    "kinesis:PutRecord"
+                  ]
+                }
+              ]
+            }
     environmentProperties:
       - propertyGroup:
           - propertyGroupId: StatefunApplicationProperties
             propertyMap:
               EVENTS_INGRESS_STREAM_DEFAULT: flink-cp-demo-ingress
               EVENTS_EGRESS_STREAM_DEFAULT: flink-cp-demo-egress
-              AWS_REGION: us-east-2

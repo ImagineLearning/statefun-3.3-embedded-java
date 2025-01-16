@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Run this script to deploy the function to the local running IDP
+cd $(dirname $0)
+
+go generate ./...
+
 # Build the Docker image
 docker build -t function-managed-flink .
 

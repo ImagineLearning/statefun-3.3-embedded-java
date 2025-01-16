@@ -16,25 +16,68 @@ spec:
       referenceable: true
       schema:
         openAPIV3Schema:
+          type: object
           properties:
             spec:
+              type: object
               properties:
                 resourceConfig:
+                  type: object
                   properties:
                     region:
-                      type: string
-                    name:
                       type: string
                     codeBucket:
                       type: string
                     codeFile:
                       type: string
-                    runtime:
-                      type: string
-                    parallelism:
-                      type: number
+                    delayedStart:
+                      type: boolean
+                    delayStartBySeconds:
+                      type: integer
                     startApplication:
                       type: boolean
+                    runtime:
+                      type: string
+                    snapshotsEnabled:
+                      type: string
+                    checkpointingEnabled:
+                      type: string
+                    checkpointIntervalMillis:
+                      type: number
+                    logLevel:
+                      type: string
+                    metricsLevel:
+                      type: string
+                    autoScalingEnabled:
+                      type: boolean
+                    parallelism:
+                      type: number
+                    parallelismPerKpu:
+                      type: number
+                    applicationRestoreType:
+                      type: string
+                    snapshotName:
+                      type: string
+                    allowNonRestoredState:
+                      type: boolean
+                    additionalPermissions:
+                      type: object
+                      properties:
+                        managedPolicyArns:
+                            type: array
+                            items:
+                                type: string
+                        inlinePolicies:
+                          type: array
+                          items:
+                              type: object
+                              properties:
+                                name:
+                                    type: string
+                                policy:
+                                    type: string
+                      items:
+                        type: string
                     environmentProperties:
                       type: array
                       items:
@@ -51,13 +94,21 @@ spec:
                                   type: object
                                   additionalProperties:
                                     type: string
-                  type: object
-              type: object
+                  required:
+                    - codeBucket
+                    - codeFile
+                    - environmentProperties
+              required:
+                - resourceConfig
             status:
-              properties:
-                managedFlinkName:
-                  type: string
-                managedFlinkArn:
-                  type: string
               type: object
-          type: object
+              properties:
+                wa1419:
+                  description: >
+                    The object at 'status.wa1419' contains properties maintained by the composition function related 
+                    to the workaround for https://github.com/crossplane-contrib/provider-upjet-aws/issues/1419"
+                  type: object
+                  properties:
+                    readyAt:
+                      type: integer
+                      format: int64
