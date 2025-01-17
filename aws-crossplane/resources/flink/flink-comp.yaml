@@ -23,3 +23,6 @@ spec:
   - step: render
     functionRef:
       name: function-managed-flink
+  - step: auto-ready-composite-resource # Auto-sets ready on the XR when the composed resources are ready
+    functionRef:
+      name: function-auto-ready

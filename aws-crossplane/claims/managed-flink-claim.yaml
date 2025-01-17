@@ -5,7 +5,16 @@ metadata:
   namespace: default
 spec:
   resourceConfig:
-    startApplication: true
+    # OPTION 1, enable delayedStart and optionally override delayedStartBySeconds (defaults to 120). Do
+    # not set startApplication to true if you enable delayedStart
+    delayedStart: false
+    delayStartBySeconds: 120
+
+    # OPTION 2, enable startApplication=true sometime after the resource is created and in the Ready state
+    # startApplication: true
+
+    # In either case, above, cross your fingers that you don't get the Running/Updating loop of death :)
+
     codeBucket: flink-cp-demo-bucket
     codeFile: my-stateful-functions-embedded-java-3.3.0.jar
     additionalPermissions:
