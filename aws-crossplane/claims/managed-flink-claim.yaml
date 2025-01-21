@@ -11,7 +11,7 @@ spec:
     delayStartBySeconds: 120
 
     # OPTION 2, enable startApplication=true sometime after the resource is created and in the Ready state
-    # startApplication: true
+    startApplication: true
 
     # In either case, above, cross your fingers that you don't get the Running/Updating loop of death :)
 

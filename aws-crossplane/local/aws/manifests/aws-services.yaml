@@ -1,3 +1,17 @@
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: debug-config
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          containers:
+            - name: package-runtime
+              args:
+                - --debug
 ---
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
@@ -34,6 +48,10 @@ spec:
   package: xpkg.upbound.io/upbound/provider-aws-kinesisanalyticsv2:v1.17.0
   controllerConfigRef:
     name: aws-config
+  runtimeConfigRef:
+    apiVersion: pkg.crossplane.io/v1beta1
+    kind: DeploymentRuntimeConfig
+    name: debug-config
 ---
 apiVersion: pkg.crossplane.io/v1
 kind: Provider

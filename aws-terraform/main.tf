@@ -185,7 +185,7 @@ resource "aws_kinesisanalyticsv2_application" "flink_demo_tf" {
       code_content {
         s3_content_location {
           bucket_arn = aws_s3_bucket.flink_demo_bucket.arn
-          file_key   = "my-stateful-functions-embedded-java-3.3.0.jar.1"
+          file_key   = "my-stateful-functions-embedded-java-3.3.0.jar"
         }
       }
       code_content_type = "ZIPFILE"

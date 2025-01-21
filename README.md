@@ -268,6 +268,7 @@ terraform destroy # When prompted, enter 'yes'
 - idpbuilder (https://github.com/cnoe-io/idpbuilder)
 - kubectl
 - jq
+- go lang
 
 #### Introduction
 This demodemonstrates that it is possible to provision and run an AWS Managed Flink application via Crossplane.  Many 
