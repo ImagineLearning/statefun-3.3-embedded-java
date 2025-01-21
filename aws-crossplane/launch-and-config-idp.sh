@@ -40,6 +40,13 @@ function main() {
   wait_for_pods crossplane-system provider-aws
   echo
 
+
+  echo "Waiting for the Crossplane AWS provider configs to be ready..."
+  until [[ $(kubectl get providerconfigs 2>&1 | grep aws | wc -l) -eq 2 ]]; do
+    sleep 2
+  done
+  echo
+
   echo "Loading the Crossplane Composite Resource Definitions and Compositions"
   for i in $(find resources -name \*xrd.yaml -o -name \*comp.yaml); do
     kubectl apply -f $i

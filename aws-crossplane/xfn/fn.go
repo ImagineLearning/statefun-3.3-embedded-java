@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -158,8 +157,7 @@ func GenerateManagedFlink(rsp *fnv1.RunFunctionResponse, desired map[resource.Na
 
 	// Fetch optional values from oxr.spec.resourceConfig
 	region, _ := getValue(oxr, "spec.resourceConfig.region", "us-east-2")
-	delayedStart, _ := getValue(oxr, "spec.resourceConfig.delayedStart", false)
-	startApplication, _ := getValue(oxr, "spec.resourceConfig.startApplication", false)
+	startApplication, _ := getValue(oxr, "spec.resourceConfig.startApplication", true)
 	runtimeEnvironment, _ := getValue(oxr, "spec.resourceConfig.runtime", "FLINK-1_18")
 	snapshotsEnabled, _ := getValue(oxr, "spec.resourceConfig.snapshotsEnabled", true)
 	checkpointingEnabled, _ := getValue(oxr, "spec.resourceConfig.checkpointingEnabled", true)
@@ -206,6 +204,7 @@ func GenerateManagedFlink(rsp *fnv1.RunFunctionResponse, desired map[resource.Na
 				"region":             region,
 				"runtimeEnvironment": runtimeEnvironment, // "FLINK-1_18",
 				"applicationMode":    "STREAMING",
+				"startApplication":   startApplication,
 				"serviceExecutionRoleSelector": map[string]interface{}{
 					"matchControllerRef": true,
 				},
@@ -252,11 +251,14 @@ func GenerateManagedFlink(rsp *fnv1.RunFunctionResponse, desired map[resource.Na
 						}),
 					}),
 				}),
-				"cloudwatchLoggingOptions": arrayWithMap(map[string]interface{}{
-					"logStreamArnSelector": map[string]interface{}{
-						"matchControllerRef": true,
-					},
-				}),
+				// NOTE: For now, don't set cloudWatchLoggingOptions as a workaround for the endless
+				// Updating loop (https://github.com/crossplane-contrib/provider-upjet-aws/issues/1419)
+
+				// "cloudwatchLoggingOptions": arrayWithMap(map[string]interface{}{
+				// 	"logStreamArnSelector": map[string]interface{}{
+				// 		"matchControllerRef": true,
+				// 	},
+				// }),
 			},
 			"providerConfigRef": map[string]interface{}{
 				"name": "provider-aws",
@@ -264,70 +266,9 @@ func GenerateManagedFlink(rsp *fnv1.RunFunctionResponse, desired map[resource.Na
 		},
 	}
 
-	if delayedStart == true {
-		// Workaround for https://github.com/crossplane-contrib/provider-upjet-aws/issues/1419.  Don't set startApplication in the MR until a few minutes
-		// after the resource becomes READY
-		observedFlink, ok := observed[FLINK_APP_RESOURCE_NAME]
-		if ok {
-			managedFlinkUpdateLoopWorkaround(flinkAppDesired, &observedFlink, oxr, log)
-		}
-	} else if startApplication == true {
-		log.Info("Setting desiredFlink.spec.forProvider.startApplication=true")
-		flinkAppDesired.Resource.SetValue("spec.forProvider.startApplication", true)
-	}
-
 	return nil // No error == Success
 }
 
-const WA1419_COUNTER_PATH string = "status.wa1419.reqCounter"
-const WA1419_READYAT_PATH string = "status.wa1419.readyAt"
-const WA1419_STARTAPP_PATH string = "status.wa1419.startApplication"
-
-func managedFlinkUpdateLoopWorkaround(desiredFlink *resource.DesiredComposed, observedFlink *resource.ObservedComposed, oxr *resource.Composite, log logging.Logger) {
-	// Workaround for https://github.com/crossplane-contrib/provider-upjet-aws/issues/1419.  Don't set startApplication in the MR until a few minutes
-	// after the resource becomes READY
-	v, err := observedFlink.Resource.GetValue("status.atProvider.status")
-	if err != nil { // if atProvider.status is unavailable, then there is nothing to do
-		log.Info("observed.status.atProvider.status is unavailable")
-		return
-	}
-	log.Info("observed.status.atProvider", "status", v)
-
-	var readyAt int64
-	ra, _ := getValue(oxr, WA1419_READYAT_PATH, int64(0))
-	raFloat64, ok := ra.(float64)
-	if ok {
-		readyAt = int64(raFloat64)
-	} else {
-		raInt64, ok := ra.(int64)
-		if ok {
-			readyAt = raInt64
-		} else {
-			readyAt = int64(0)
-		}
-	}
-
-	if v == "READY" {
-		log.Info(fmt.Sprintf("Got oxr.%s=%d", WA1419_READYAT_PATH, readyAt))
-		if readyAt == 0 {
-			readyAt = time.Now().UnixMilli()
-			oxr.Resource.SetValue(WA1419_READYAT_PATH, readyAt)
-			log.Info(fmt.Sprintf("Set oxr.%s=%d", WA1419_READYAT_PATH, readyAt))
-		}
-	}
-
-	if readyAt > 0 {
-		nowMillis := time.Now().UnixMilli()
-		diffMillis := nowMillis - readyAt
-		ds, _ := getValue(oxr, "spec.resourceConfig.delayStartBySeconds", 120) // 2 minutes by default
-		log.Info("Timestamps", "nowMillis", nowMillis, "readyAtMillis", readyAt, "diff", diffMillis, "delayStartBySeconds", ds)
-		delayStartBySeconds, ok := ds.(int64)
-		if ok && diffMillis >= (delayStartBySeconds*time.Second.Milliseconds()) {
-			log.Info("Setting desiredFlink.spec.forProvider.startApplication=true")
-			desiredFlink.Resource.SetValue("spec.forProvider.startApplication", true)
-		}
-	}
-}
 
 func GenerateLogGroup(rsp *fnv1.RunFunctionResponse, desired map[resource.Name]*resource.DesiredComposed, observed map[resource.Name]resource.ObservedComposed, oxr *resource.Composite, log logging.Logger) error {
 	logGroupDesired := resource.NewDesiredComposed()

@@ -333,24 +333,20 @@ aws s3 cp ../target/my-stateful-functions-embedded-java-3.3.0.jar s3://${flink_b
 
 ##### Provision the Managed Flink application  
 
-Apply the following claim to trigger the creation of the Flink application, its role, and log groups.  Note that by 
-default Flink application will become 'Ready' since `startApplication: true` is commented-out in the claim.  Do not
-uncomment this line yet.
+Apply the following claim to trigger the creation of the Flink application, its role, log group, and log stream. 
+Note at the time of this writing, the Flink application is not configured with the log stream to workaround a bug in
+the Crossplane provider (https://github.com/crossplane-contrib/provider-upjet-aws/issues/1419).
 
 ```
 kubectl apply -f claims/managed-flink-claim.yaml
 ```
 
-Visit the AWS Managed Flink applications page in the web console.  When the application status becomes `Ready`, 
-uncomment the `startAppication: true` line in the `managed-flink-claim.yaml` file and re-run 
-the `kubectl apply -f claims/managed-flink-claim.yaml` command.  If the initial claim apply is performed 
-with `startApplication: true` then Crossplane appears to go into a loop where it updates the application every few 
-minutes, and so it switches back and forth between `Running` and `Updating` :(
-
 
 Wait until the Flink application is in the 'Running' state. This may take a few minutes.
 
 #### Monitor the CloudWatch logging output
+
+See the note above re: logging config.  Until the bug is fixed, no log output will be available.
 
 The following script will show all the log entries from the start of application launch, and will
 wait for new entries to arrive and display them too.  The script will resume from where it

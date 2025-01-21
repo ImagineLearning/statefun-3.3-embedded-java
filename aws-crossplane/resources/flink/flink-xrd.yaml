@@ -30,12 +30,6 @@ spec:
                       type: string
                     codeFile:
                       type: string
-                    delayedStart:
-                      type: boolean
-                    delayStartBySeconds:
-                      type: integer
-                    startApplication:
-                      type: boolean
                     runtime:
                       type: string
                     snapshotsEnabled:
@@ -100,15 +94,3 @@ spec:
                     - environmentProperties
               required:
                 - resourceConfig
-            status:
-              type: object
-              properties:
-                wa1419:
-                  description: >
-                    The object at 'status.wa1419' contains properties maintained by the composition function related 
-                    to the workaround for https://github.com/crossplane-contrib/provider-upjet-aws/issues/1419"
-                  type: object
-                  properties:
-                    readyAt:
-                      type: integer
-                      format: int64
