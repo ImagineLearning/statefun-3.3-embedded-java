@@ -372,10 +372,15 @@ wait for new entries to arrive and display them too.
 Manually delete the files in the S3 bucket, and delete the Kinesis stream `flink-demo-ingress` (the Flink application 
 adds a fanout consumer to the stream which will block any deletion attempted by Crossplane).
 
+```
+aws s3 rm --recursive s3://$(aws s3 ls | grep flink-cp-demo | awk3)
+aws kinesis delete-stream --enforce-consumer-deletion --stream-name flink-cp-demo-ingress 
+```
+
 Run the following commands to delete the remaining resources:
 ```
-kubectl delete -f resources/claims/managed-flink-claims.yaml
-kubectl delete -f resources/claims/demo-setup-claims.yaml
+kubectl delete -f claims/managed-flink-claim.yaml
+kubectl delete -f claims/demo-setup-claims.yaml
 ```
 
 Shut down the local IDP with the command:

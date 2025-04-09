@@ -28,7 +28,7 @@ function main() {
     echo
   fi
 
-  echo "Waiting for getea to be ready..."
+  echo "Waiting for gitea to be ready..."
   wait_for_pods gitea my-gitea
   echo
 
