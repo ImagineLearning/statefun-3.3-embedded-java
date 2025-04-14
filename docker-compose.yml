@@ -1,23 +1,25 @@
 services:
   localstack:
-    image: localstack/localstack:3.0.2
+    image: localstack/localstack:3.1.0
+    container_name: demo.localhost.localstack.cloud
     profiles: [kinesis,statefun,all]
     ports:
       - "4566:4566"
     environment:
       - SERVICES=kinesis
-      - HOSTNAME=localstack
+      - HOSTNAME=demo.localhost.localstack.cloud
       - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=example-access-key-id
       - AWS_SECRET_ACCESS_KEY=example-secret-access-key
-      - AWS_ENDPOINT=https://localstack:4566
-      - AWS_ENDPOINT_URL=https://localstack:4566
+      - AWS_ENDPOINT=https://demo.localhost.localstack.cloud:4566
+      - AWS_ENDPOINT_URL=https://demo.localhost.localstack.cloud:4566
       - DEBUG=0
       - KINESIS_ERROR_PROBABILITY=0.0
       - DOCKER_HOST=unix:///var/run/docker.sock
 
   create-streams:
     image: amazon/aws-cli
+    container_name: demo.create-kinesis-streams
     profiles: [kinesis,statefun,all]
     depends_on:
       - localstack
@@ -33,14 +35,15 @@ services:
       "
         set -x
         echo Creating ingress stream
-        until aws --endpoint-url=http://localstack:4566 kinesis create-stream --stream-name example-ingress-stream --shard-count 1; do sleep 1; done
+        until aws --endpoint-url=http://demo.localhost.localstack.cloud:4566 kinesis create-stream --stream-name example-ingress-stream --shard-count 1; do sleep 1; done
         echo Creating egress stream
-        aws --endpoint-url=http://localstack:4566 kinesis create-stream --stream-name example-egress-stream --shard-count 1   
+        aws --endpoint-url=http://demo.localhost.localstack.cloud:4566 kinesis create-stream --stream-name example-egress-stream --shard-count 1   
         echo Listing streams
-        aws --endpoint-url=http://localstack:4566 kinesis list-streams 
+        aws --endpoint-url=http://demo.localhost.localstack.cloud:4566 kinesis list-streams 
       "
 
   jobmanager:
+    container_name: demo.flink-jobmanager
     profiles: [statefun,all]
     depends_on:
       - create-streams
@@ -49,8 +52,8 @@ services:
     # to restore from savepoint, add this to the command: --fromSavepoint file:///savepoints/savepoint-xxxx-yyyyyy
     command: >
       standalone-job
-      -D "rest.address=jobmanager" 
-      -D "jobmanager.rpc.address=jobmanager" 
+      -D "rest.address=demo.flink-jobmanager" 
+      -D "jobmanager.rpc.address=demo.flink-jobmanager" 
       -D "state.savepoints.dir=file:///savepoints" 
       -D "state.checkpoints.dir=file:///checkpoints" 
       --job-classname org.apache.flink.statefun.flink.core.StatefulFunctionsJob
@@ -64,15 +67,16 @@ services:
       - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=example-access-key-id
       - AWS_SECRET_ACCESS_KEY=example-secret-access-key
-      - AWS_ENDPOINT=https://host.docker.internal:4566
+      - AWS_ENDPOINT=https://demo.localhost.localstack.cloud:4566
       - AWS_CBOR_DISABLE=true
       - USE_ENHANCED_FANOUT=false # Disable enhanced fanout for local development, there seems to be a bug in localstack
-      - FLINK_ENV_JAVA_OPTS=-Dcom.amazonaws.sdk.disableCertChecking
+#      - FLINK_ENV_JAVA_OPTS=-Dcom.amazonaws.sdk.disableCertChecking
     volumes:
       - ./docker-mounts/checkpoints:/checkpoints
       - ./docker-mounts/savepoints:/savepoints
 
   taskmanager:
+    container_name: demo.flink-taskmanager
     profiles: [statefun,all]
     depends_on:
       - jobmanager
@@ -80,7 +84,7 @@ services:
       context: .
     command: >
       taskmanager 
-      -D "jobmanager.rpc.address=jobmanager" 
+      -D "jobmanager.rpc.address=demo.flink-jobmanager" 
       -D "state.savepoints.dir=file:///savepoints"
       -D "state.checkpoints.dir=file:///checkpoints"
     entrypoint: /entrypoint.sh
@@ -94,16 +98,17 @@ services:
       - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=example-access-key-id
       - AWS_SECRET_ACCESS_KEY=example-secret-access-key
-      - AWS_ENDPOINT=https://host.docker.internal:4566
+      - AWS_ENDPOINT=https://demo.localhost.localstack.cloud:4566
       - AWS_CBOR_DISABLE=true
       - USE_ENHANCED_FANOUT=false # Disable enhanced fanout for local development, there seems to be a bug in localstack
-      - FLINK_ENV_JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5066 -Dcom.amazonaws.sdk.disableCertChecking
+      - FLINK_ENV_JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5066 #-Dcom.amazonaws.sdk.disableCertChecking
     volumes:
       - ./docker-mounts/checkpoints:/checkpoints
       - ./docker-mounts/savepoints:/savepoints
 
   send-events:
     image: amazon/aws-cli
+    container_name: demo.send-events-to-ingress
     profiles: [send-events,all]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -118,7 +123,7 @@ services:
         grep -v test.action /test-resources/product-cart-integration-test-events.jsonl | while read line; do
           partkey=$$(echo $$line | md5sum | awk '{print $$1}') 
           data=$$(echo $$line | base64 -w 0)
-          cmd=\"aws --endpoint-url=http://localstack:4566 kinesis put-record --stream-name example-ingress-stream --partition-key $$partkey --data $$data\"
+          cmd=\"aws --endpoint-url=http://demo.localhost.localstack.cloud:4566 kinesis put-record --stream-name example-ingress-stream --partition-key $$partkey --data $$data\"
           echo $$cmd
           eval $$cmd
         done
@@ -126,6 +131,7 @@ services:
 
   get-egress-events:
     image: amazon/aws-cli
+    container_name: demo.get-events-from-egress
     profiles: [get-egress-events,all]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -138,9 +144,9 @@ services:
     command: >
       "
         yum install --quiet -y jq
-        shard_id=$$(aws --endpoint-url=http://localstack:4566 kinesis list-shards --stream-name example-egress-stream | jq -crM .Shards[0].ShardId)
-        shard_iterator=$$(aws --endpoint-url=http://localstack:4566 kinesis get-shard-iterator --shard-id $$shard_id --shard-iterator-type TRIM_HORIZON --stream-name example-egress-stream | jq -crM .ShardIterator)
-        for encoded_data in $$(aws --endpoint-url=http://localstack:4566 kinesis get-records --shard-iterator $$shard_iterator | jq -crM .Records[].Data); do
+        shard_id=$$(aws --endpoint-url=http://demo.localhost.localstack.cloud:4566 kinesis list-shards --stream-name example-egress-stream | jq -crM .Shards[0].ShardId)
+        shard_iterator=$$(aws --endpoint-url=http://demo.localhost.localstack.cloud:4566 kinesis get-shard-iterator --shard-id $$shard_id --shard-iterator-type TRIM_HORIZON --stream-name example-egress-stream | jq -crM .ShardIterator)
+        for encoded_data in $$(aws --endpoint-url=http://demo.localhost.localstack.cloud:4566 kinesis get-records --shard-iterator $$shard_iterator | jq -crM .Records[].Data); do
           echo $$encoded_data | base64 -d | jq .
         done
       "      

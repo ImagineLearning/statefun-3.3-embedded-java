@@ -2,7 +2,7 @@
 
 set -e
 
-# Fix terminal on exit b/c 'docker compose' leaves tty termiinal echo off sometimes
+# Fix terminal on exit b/c 'docker compose' leaves tty terminal echo off sometimes
 trap "stty sane" EXIT
 
 cd $(dirname $0)
