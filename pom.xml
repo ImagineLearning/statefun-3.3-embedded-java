@@ -91,6 +91,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- Explicitly include core functions library for StatefulFunctionsConfig -->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>statefun-flink-core</artifactId>
+            <version>${statefun.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-kinesisanalytics-runtime</artifactId>
@@ -276,7 +282,8 @@
                             <outputDirectory>${project.build.directory}/flink-plugins</outputDirectory>
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>true</overWriteSnapshots>
-                            <excludeTransitive>true</excludeTransitive>
+                            <!-- Include transitive dependencies so core classes are available at runtime -->
+                            <excludeTransitive>false</excludeTransitive>
                         </configuration>
                     </execution>
                 </executions>
