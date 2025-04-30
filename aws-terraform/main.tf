@@ -172,6 +172,25 @@ resource "aws_iam_role_policy" "flink_app_metrics_policy" {
   })
 }
 
+resource "aws_iam_role_policy" "flink_app_secrets_manager_policy" {
+  name = "SecretsManagerAccessPolicy"
+  role = aws_iam_role.flink_application_role.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ],
+        Effect   = "Allow",
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+
 # Reference: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kinesisanalyticsv2_application
 resource "aws_kinesisanalyticsv2_application" "flink_demo_tf" {
   name                   = "flink-tf-demo-application"
@@ -203,6 +222,13 @@ resource "aws_kinesisanalyticsv2_application" "flink_demo_tf" {
               EVENTS_INGRESS_STREAM_DEFAULT = "${aws_kinesis_stream.flink_demo_ingress.name}"
               EVENTS_EGRESS_STREAM_DEFAULT  = "${aws_kinesis_stream.flink_demo_egress.name}"
               AWS_REGION =  data.aws_region.current.name
+              ENVIRONMENT = "demo"
+              NAMESPACE = "sandbox-demo"
+              OTEL_SDK_DISABLED: "false"
+              OTEL_SERVICE_NAME: "sandbox-statefun"
+              OTEL_EXPORTER_OTLP_ENDPOINT = "https://otlp.nr-data.net:443"
+              OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+              OTEL_EXPORTER_OTLP_HEADERS = "!secret:OTEL_EXPORTER_OTLP_HEADERS"
         }
       }
     }
@@ -216,7 +242,7 @@ resource "aws_kinesisanalyticsv2_application" "flink_demo_tf" {
       monitoring_configuration {
         configuration_type = "CUSTOM"
         log_level          = "INFO"
-        metrics_level      = "TASK"
+        metrics_level      = "APPLICATION"
       }
       parallelism_configuration {
         auto_scaling_enabled = false

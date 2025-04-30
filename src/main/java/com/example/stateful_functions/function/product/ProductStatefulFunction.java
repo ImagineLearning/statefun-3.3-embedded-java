@@ -101,11 +101,13 @@ public class ProductStatefulFunction extends AbstractStatefulFunction {
         FunctionSubscriptionDetails subscriptionDetails = cloudEventDataAccess.toFunctionSubscriptionDetails(subscriptionEvent);
         FunctionSubscriber subscriber = FunctionSubscriberUtil.subscriberFromSubscription(subscriptionDetails);
         if (subscriptionDetails.getAction() == FunctionSubscriptionAction.UNSUBSCRIBE) {
+            context.metrics().counter("unsubscribed").inc();
             subscribers.remove(subscriber.getSubscriberId());
             return;
         }
 
         if (subscriptionDetails.getAction() == FunctionSubscriptionAction.SUBSCRIBE) {
+            context.metrics().counter("subscribed").inc();
             subscribers.set(subscriber.getSubscriberId(), subscriber);
         }
 
@@ -113,6 +115,7 @@ public class ProductStatefulFunction extends AbstractStatefulFunction {
     }
 
     private void notifySubscriber(Context context, FunctionSubscriber subscriber, CloudEvent productEvent) {
+        context.metrics().counter("notify_subscriber").inc();
         send(context, new FunctionType(subscriber.getNamespace(), subscriber.getType()), subscriber.getId(), productEvent);
     }
 

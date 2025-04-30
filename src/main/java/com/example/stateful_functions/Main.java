@@ -13,6 +13,11 @@ public class Main {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
         StatefulFunctionsConfig stateFunConfig = StatefulFunctionsConfig.fromEnvironment(env);
+
+        stateFunConfig.setMetricFunctionNamespaceKey("ns");
+        stateFunConfig.setMetricFunctionTypeKey("type");
+        stateFunConfig.setMetricGroupAdapterFactoryClassName("com.example.stateful_functions.metrics.JetstreamMetricGroupAdapterFactory");
+
         stateFunConfig.setProvider((StatefulFunctionsUniverseProvider) (classLoader, statefulFunctionsConfig) -> {
             Modules modules = Modules.loadFromClassPath(stateFunConfig);
             return modules.createStatefulFunctionsUniverse();
