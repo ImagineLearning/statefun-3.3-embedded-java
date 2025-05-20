@@ -1,9 +1,9 @@
-# The parent Flink image (flink:1.13.2-scala_2.12-java11) only contains the JRE (openjdk:11-jre), and it is missing key
-# diagnostic tools. This multistage build will overwrite the JRE with the JDK from openjdk:11
+# The parent Flink image (flink:1.81.1-java17) only contains the JRE (openjdk:17-jre), and it is missing key
+# diagnostic tools. This multistage build will overwrite the JRE with the JDK from openjdk:17
 # See https://docs.docker.com/develop/develop-images/multistage-build/
 # Add --platform=linux/amd64 to the FROM commands below when on Apple silicon
 #FROM --platform=linux/amd64 openjdk:17 as jdk_image
-FROM --platform=linux/amd64 flink:1.18.1-java17
+FROM flink:1.18.1-java17
 
 # Copy the JDK from the jdk_image
 #COPY --from=jdk_image /usr/java/openjdk-17 /opt/java/openjdk
