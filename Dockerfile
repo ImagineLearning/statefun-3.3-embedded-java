@@ -1,4 +1,4 @@
-# The parent Flink image (flink:1.81.1-java17) only contains the JRE (openjdk:17-jre), and it is missing key
+# The parent Flink image (flink:1.18.1-java17) only contains the JRE (openjdk:17-jre), and it is missing key
 # diagnostic tools. This multistage build will overwrite the JRE with the JDK from openjdk:17
 # See https://docs.docker.com/develop/develop-images/multistage-build/
 # Add --platform=linux/amd64 to the FROM commands below when on Apple silicon
