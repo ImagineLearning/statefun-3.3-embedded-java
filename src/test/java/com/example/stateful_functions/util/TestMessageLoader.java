@@ -2,9 +2,10 @@ package com.example.stateful_functions.util;
 
 import com.example.stateful_functions.protobuf.ExampleProtobuf;
 import com.google.common.io.Resources;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+
 
 import java.io.BufferedReader;
 import java.io.Serializable;
@@ -13,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@Singleton
 public class TestMessageLoader implements Serializable {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestMessageLoader.class);

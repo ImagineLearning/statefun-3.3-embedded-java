@@ -4,18 +4,18 @@ import com.example.stateful_functions.cloudevents.ExampleCloudEventDataAccess;
 import com.example.stateful_functions.cloudevents.ExampleCloudEventJsonFormat;
 import com.example.stateful_functions.protobuf.ExampleProtobuf;
 import io.cloudevents.CloudEvent;
+import jakarta.inject.Inject;
 import org.apache.flink.statefun.sdk.FunctionType;
 import org.apache.flink.statefun.sdk.io.Router;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 public abstract class AbstractForwarder implements Forwarder {
 
-    @Autowired
+    @Inject
     ExampleCloudEventJsonFormat cloudEventJsonFormat;
 
-    @Autowired
+    @Inject
     protected ExampleCloudEventDataAccess cloudEventDataAccess;
 
     protected Logger getLogger() {

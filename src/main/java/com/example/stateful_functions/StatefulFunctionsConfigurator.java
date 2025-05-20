@@ -4,34 +4,27 @@ import com.example.stateful_functions.egress.EgressSpecs;
 import com.example.stateful_functions.function.FunctionProvider;
 import com.example.stateful_functions.ingress.IngressSpecs;
 import com.example.stateful_functions.router.MessageRouter;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.flink.statefun.sdk.spi.StatefulFunctionModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-@Component
-@Configuration
-@ComponentScan(basePackages = "com.example.stateful_functions")
-public class SpringModule {
+@Singleton
+public class StatefulFunctionsConfigurator {
 
-    private static Logger LOG = LoggerFactory.getLogger(SpringModule.class);
+    private static Logger LOG = LoggerFactory.getLogger(StatefulFunctionsConfigurator.class);
 
-    @Autowired
+    @Inject
     MessageRouter messageRouter;
 
-    @Autowired
+    @Inject
     FunctionProvider functionProvider;
 
 
-    public SpringModule() { }
+    public StatefulFunctionsConfigurator() { }
 
     public void configure(Map<String, String> globalConfiguration, StatefulFunctionModule.Binder binder) {
         // bind the default ingress to the system along with the router
@@ -45,11 +38,4 @@ public class SpringModule {
         functionProvider.bindFunctions(binder);
     }
 
-    @Bean
-    @Scope("singleton")
-    public ObjectMapper getObjectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        // Configure objectMapper has needed here
-        return objectMapper;
-    }
 }

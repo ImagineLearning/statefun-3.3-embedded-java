@@ -3,25 +3,25 @@ package com.example.stateful_functions.router;
 import com.example.stateful_functions.cloudevents.ExampleCloudEventJsonFormat;
 import com.example.stateful_functions.protobuf.ExampleProtobuf;
 import io.cloudevents.CloudEvent;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.flink.statefun.sdk.io.Router;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 
-@Component
+@Singleton
 public final class MessageRouter implements Router<ExampleProtobuf.Envelope> {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageRouter.class);
 
     // Spring automatically collects all the of Forwarders and provides them as a list here
-    @Autowired
+    @Inject
     private List<Forwarder> forwarders;
 
-    @Autowired
+    @Inject
     ExampleCloudEventJsonFormat cloudEventJsonFormat;
 
 

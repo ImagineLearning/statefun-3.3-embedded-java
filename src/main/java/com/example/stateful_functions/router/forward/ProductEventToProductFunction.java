@@ -5,10 +5,10 @@ import com.example.stateful_functions.function.product.ProductStatefulFunction;
 import com.example.stateful_functions.protobuf.ExampleProtobuf;
 import com.example.stateful_functions.router.AbstractForwarder;
 import io.cloudevents.CloudEvent;
+import jakarta.inject.Singleton;
 import org.apache.flink.statefun.sdk.io.Router;
-import org.springframework.stereotype.Component;
 
-@Component
+@Singleton
 public class ProductEventToProductFunction extends AbstractForwarder {
 
     @Override

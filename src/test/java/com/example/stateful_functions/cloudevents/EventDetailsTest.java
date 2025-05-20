@@ -10,7 +10,8 @@ import io.cloudevents.core.format.EventFormat;
 import io.cloudevents.core.provider.EventFormatProvider;
 import io.cloudevents.jackson.JsonCloudEventData;
 import io.cloudevents.jackson.JsonFormat;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -18,9 +19,9 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EventDetailsTest {
 
@@ -43,7 +44,8 @@ public class EventDetailsTest {
 
         ObjectMapper objectMapper = new ObjectMapper();
         EventFormat eventFormat = EventFormatProvider.getInstance().resolveFormat(JsonFormat.CONTENT_TYPE);
-        ExampleCloudEventDataAccess cloudEventDataAccess = new ExampleCloudEventDataAccess(objectMapper);
+        ExampleCloudEventDataAccess cloudEventDataAccess = new ExampleCloudEventDataAccess();
+        cloudEventDataAccess.setObjectMapper(objectMapper);
 
         ProductEventDetails productDetails = new ProductEventDetails.Builder()
                 .id(WIDGET_PRODUCT_ID)

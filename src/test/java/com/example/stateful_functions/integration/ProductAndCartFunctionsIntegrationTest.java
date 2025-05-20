@@ -8,16 +8,16 @@ import com.example.stateful_functions.cloudevents.data.CartStatusEventDetails;
 import com.example.stateful_functions.cloudevents.data.ProductAvailability;
 import com.example.stateful_functions.protobuf.ExampleProtobuf;
 import io.cloudevents.CloudEvent;
-import org.junit.Test;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /*
  * Test the interaction between the product and cart stateful functions.  Here, we are sending product and cart action
@@ -26,10 +26,10 @@ import static org.junit.Assert.assertEquals;
 public class ProductAndCartFunctionsIntegrationTest extends StatefulFunctionIntegrationTest {
     private static final Logger LOG = LoggerFactory.getLogger(ProductAndCartFunctionsIntegrationTest.class);
 
-    @Autowired
+    @Inject
     ExampleCloudEventJsonFormat cloudEventJsonFormat;
 
-    @Autowired
+    @Inject
     ExampleCloudEventDataAccess cloudEventDataAccess;
 
 
@@ -45,7 +45,7 @@ public class ProductAndCartFunctionsIntegrationTest extends StatefulFunctionInte
                 .reduce((first, second) -> second)
                 .orElse(null);
 
-        assertNotNull("cart status event was not sent", cartStatusEvent);
+        assertNotNull(cartStatusEvent, "cart status event was not sent");
         CartStatusEventDetails cartStatusEventDetails = cloudEventDataAccess.toCartStatusEventDetails(cartStatusEvent);
         assertEquals(1, cartStatusEventDetails.getCartItemStatuses().size());
         CartItemStatusDetails itemStatus = cartStatusEventDetails.getCartItemStatuses().get(0);

@@ -1,7 +1,6 @@
 package com.example.stateful_functions.function;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+import io.micronaut.context.annotation.Prototype;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -13,7 +12,6 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.TYPE})
-@Component
-@Scope("prototype")
+@Prototype
 public @interface StatefunFunction {
 }

@@ -3,24 +3,26 @@ package com.example.stateful_functions.util;
 import com.example.stateful_functions.cloudevents.ExampleCloudEventJsonFormat;
 import com.example.stateful_functions.protobuf.ExampleProtobuf;
 import io.cloudevents.CloudEvent;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+
 
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@Singleton
 public class TestMessageSource implements SourceFunction<ExampleProtobuf.Envelope>, Serializable {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestMessageSource.class);
 
-    @Autowired TestMessageLoader testMessageLoader;
+    @Inject
+    TestMessageLoader testMessageLoader;
 
     final List<ExampleProtobuf.Envelope> envelopes = new ArrayList<>();
 

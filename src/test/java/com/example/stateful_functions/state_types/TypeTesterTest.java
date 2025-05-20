@@ -1,7 +1,9 @@
 package com.example.stateful_functions.state_types;
 
-import com.example.stateful_functions.AbstractStatefulFunctionTest;
 import com.example.stateful_functions.function.FunctionProvider;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 import org.apache.flink.api.common.typeinfo.LocalTimeTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.GenericTypeInfo;
@@ -12,34 +14,27 @@ import org.apache.flink.statefun.sdk.FunctionType;
 import org.apache.flink.statefun.sdk.StatefulFunction;
 import org.apache.flink.statefun.sdk.state.PersistedTable;
 import org.apache.flink.statefun.sdk.state.PersistedValue;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
-import static org.junit.Assert.assertTrue;
-
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Ensures that the stateful function state model classes meet the requirements for Kyro serialization
  */
-public class TypeTesterTest  extends AbstractStatefulFunctionTest {
+@MicronautTest
+public class TypeTesterTest {
 
 
     private static final Logger LOG = LoggerFactory.getLogger(TypeTesterTest.class);
 
-    @Autowired
-    ApplicationContext applicationContext;
+    @Inject
+    public ApplicationContext applicationContext;
 
     @Test
     public void run() throws Exception {
@@ -107,7 +102,7 @@ public class TypeTesterTest  extends AbstractStatefulFunctionTest {
                 modelObject = modelClass.getConstructor().newInstance();
             }
         } catch (Exception ex) {
-            assertTrue(modelClass.getSimpleName() + " needs parameterless constructor", false);
+            fail(modelClass.getSimpleName() + " needs parameterless constructor");
         }
 
         TypeInformation flinkTypeInfo = TypeInformation.of(modelClass);
@@ -117,7 +112,7 @@ public class TypeTesterTest  extends AbstractStatefulFunctionTest {
         if (modelObject instanceof Collection<?>)
             return;
 
-        assertTrue(modelClass.getSimpleName() + " must be A POJO, found " + flinkTypeInfo, flinkTypeInfo instanceof PojoTypeInfo);
+        assertTrue(flinkTypeInfo instanceof PojoTypeInfo, modelClass.getSimpleName() + " must be A POJO, found " + flinkTypeInfo);
 
         PojoTypeInfo pojoFlinkTypeInfo = (PojoTypeInfo)flinkTypeInfo;
 
@@ -144,11 +139,11 @@ public class TypeTesterTest  extends AbstractStatefulFunctionTest {
                 toCheck.add(flinkFieldTypeInfo);
 
                 // Is the field in our class compatible with flink's type info entry for our field
-                assertTrue(c.getSimpleName() + "." + classFieldName + " is not compatible with " + flinkFieldTypeInfo, isCompatible(modelObject, modelClass, modelClassField, modelFieldClass, flinkFieldTypeInfo, toCheck));
-                assertTrue(c.getSimpleName() + "." + classFieldName + " needs correctly typed getters and setters.", hasGettersSetters(modelClass, modelFieldClass, modelClassField));
+                assertTrue(isCompatible(modelObject, modelClass, modelClassField, modelFieldClass, flinkFieldTypeInfo, toCheck), c.getSimpleName() + "." + classFieldName + " is not compatible with " + flinkFieldTypeInfo);
+                assertTrue(hasGettersSetters(modelClass, modelFieldClass, modelClassField), c.getSimpleName() + "." + classFieldName + " needs correctly typed getters and setters.");
 
                 if (!flinkFieldTypeInfo.isBasicType()) {
-                    assertFalse(c.getSimpleName() + "." + classFieldName + " must not be generic, found " + flinkFieldTypeInfo, flinkFieldTypeInfo instanceof GenericTypeInfo);
+                    assertFalse(flinkFieldTypeInfo instanceof GenericTypeInfo, c.getSimpleName() + "." + classFieldName + " must not be generic, found " + flinkFieldTypeInfo);
 
                     if (flinkFieldTypeInfo instanceof MapTypeInfo) {
                         MapTypeInfo mapTypeInfo = (MapTypeInfo) flinkFieldTypeInfo;
