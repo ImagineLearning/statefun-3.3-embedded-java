@@ -4,15 +4,15 @@ import com.example.stateful_functions.function.product.ProductStateDetails;
 import com.example.stateful_functions.function.product.ProductStatefulFunction;
 import com.example.stateful_functions.protobuf.ExampleProtobuf;
 import com.example.stateful_functions.util.TestMessageLoader;
+import jakarta.inject.Inject;
 import org.apache.flink.statefun.testutils.function.FunctionTestHarness;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Iterator;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /*
  * Test of ProductDetailsStatefulFunction
@@ -22,10 +22,10 @@ import static org.junit.Assert.assertNotNull;
 public class ProductStatefulFunctionTest extends StatefulFunctionIsolationTest {
     private static final Logger LOG = LoggerFactory.getLogger(ProductStatefulFunctionTest.class);
 
-    @Autowired
+    @Inject
     ProductStatefulFunction statefulFunction;
 
-    @Autowired
+    @Inject
     TestMessageLoader testMessageLoader;
 
     @Test

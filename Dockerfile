@@ -1,11 +1,12 @@
-# The parent Flink image (flink:1.18.1-java11) only contains the JRE (openjdk:11-jre), and it is missing key
+# The parent Flink image (flink:1.13.2-scala_2.12-java11) only contains the JRE (openjdk:11-jre), and it is missing key
 # diagnostic tools. This multistage build will overwrite the JRE with the JDK from openjdk:11
 # See https://docs.docker.com/develop/develop-images/multistage-build/
-FROM --platform=linux/amd64 openjdk:11 AS jdk_image
-FROM --platform=linux/amd64 flink:1.18.1-java11
+# Add --platform=linux/amd64 to the FROM commands below when on Apple silicon
+#FROM --platform=linux/amd64 openjdk:17 as jdk_image
+FROM --platform=linux/amd64 flink:1.18.1-java17
 
 # Copy the JDK from the jdk_image
-COPY --from=jdk_image /usr/local/openjdk-11 /opt/java/openjdk/
+#COPY --from=jdk_image /usr/java/openjdk-17 /opt/java/openjdk
 
 RUN sed -i -e 's/^.*networkaddress.cache.ttl=.*$/networkaddress.cache.ttl=30/g' /opt/java/openjdk/conf/security/java.security
 RUN sed -i -e 's/^.*networkaddress.cache.negative.ttl=.*$/networkaddress.cache.negative.ttl=10/g' /opt/java/openjdk/conf/security/java.security

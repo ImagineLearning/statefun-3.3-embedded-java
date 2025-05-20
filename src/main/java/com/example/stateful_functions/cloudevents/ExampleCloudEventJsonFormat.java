@@ -4,13 +4,13 @@ import io.cloudevents.CloudEvent;
 import io.cloudevents.core.format.EventFormat;
 import io.cloudevents.core.provider.EventFormatProvider;
 import io.cloudevents.jackson.JsonFormat;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 
-@Component
+@Singleton
 public class ExampleCloudEventJsonFormat {
 
     private static Logger LOG = LoggerFactory.getLogger(ExampleCloudEventJsonFormat.class);

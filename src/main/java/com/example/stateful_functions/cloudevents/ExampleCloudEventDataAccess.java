@@ -5,28 +5,27 @@ import com.example.stateful_functions.cloudevents.data.CartStatusEventDetails;
 import com.example.stateful_functions.cloudevents.data.ProductEventDetails;
 import com.example.stateful_functions.cloudevents.data.internal.FunctionSubscriptionDetails;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.CloudEventUtils;
 import io.cloudevents.core.data.PojoCloudEventData;
 import io.cloudevents.jackson.PojoCloudEventDataMapper;
-import org.apache.flink.annotation.VisibleForTesting;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
-@Component
+@Singleton
 public class ExampleCloudEventDataAccess {
 
-    @Autowired
-    ObjectMapper objectMapper;
+    @Inject
+    public ObjectMapper objectMapper;
 
     public ExampleCloudEventDataAccess() {
     }
 
     @VisibleForTesting
-    public ExampleCloudEventDataAccess(ObjectMapper objectMapper) {
+    public void setObjectMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
-
 
     public ObjectMapper getObjectMapper() {
         return objectMapper;

@@ -19,10 +19,8 @@ package com.example.stateful_functions;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.flink.statefun.sdk.spi.StatefulFunctionModule;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-
+import io.micronaut.context.ApplicationContext;
 import java.util.Map;
 
 public final class StatefulFunctionsModule implements StatefulFunctionModule {
@@ -37,9 +35,9 @@ public final class StatefulFunctionsModule implements StatefulFunctionModule {
     @Override
     public void configure(Map<String, String> globalConfiguration, Binder binder) {
         if (applicationContext == null) {
-            applicationContext = new AnnotationConfigApplicationContext(SpringModule.class);
+            applicationContext = io.micronaut.context.ApplicationContext.run();
         }
-        SpringModule module = applicationContext.getBean(SpringModule.class);
+        StatefulFunctionsConfigurator module = applicationContext.getBean(StatefulFunctionsConfigurator.class);
         module.configure(globalConfiguration, binder);
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();

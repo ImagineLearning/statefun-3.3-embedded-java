@@ -11,12 +11,12 @@ import com.example.stateful_functions.protobuf.ExampleProtobuf;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import io.cloudevents.jackson.JsonCloudEventData;
+import jakarta.inject.Inject;
 import org.apache.flink.statefun.sdk.Context;
 import org.apache.flink.statefun.sdk.FunctionType;
 import org.apache.flink.statefun.sdk.StatefulFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.time.OffsetDateTime;
@@ -29,10 +29,10 @@ public abstract class AbstractStatefulFunction implements StatefulFunction {
 
     public abstract FunctionType getFunctionType();
 
-    @Autowired
+    @Inject
     protected ExampleCloudEventJsonFormat cloudEventJsonFormat;
 
-    @Autowired
+    @Inject
     protected ExampleCloudEventDataAccess cloudEventDataAccess;
 
     @Override

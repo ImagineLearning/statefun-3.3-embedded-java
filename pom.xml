@@ -5,6 +5,12 @@
 
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>io.micronaut.platform</groupId>
+        <artifactId>micronaut-parent</artifactId>
+        <version>4.7.6</version>
+    </parent>
+
     <groupId>com.example.statefun-java</groupId>
     <artifactId>my-stateful-functions-embedded-java</artifactId>
     <version>3.3.0</version>
@@ -19,12 +25,20 @@
         <statefun.version>3.3.0.1-1.18</statefun.version>
         <flink.version>1.18.1</flink.version>
         <protobuf.version>3.25.6</protobuf.version>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.deploy.skip>true</maven.deploy.skip>
         <aws.java.sdk.version>2.20.162</aws.java.sdk.version>
         <kda.runtime.version>1.2.0</kda.runtime.version>
+
+        <jdk.version>17</jdk.version>
+        <release.version>17</release.version>
+        <micronaut.version>4.7.6</micronaut.version>
+        <micronaut.runtime>netty</micronaut.runtime>
+        <micronaut.aot.enabled>false</micronaut.aot.enabled>
+        <micronaut.aot.packageName>com.example.aot.generated</micronaut.aot.packageName>
+        <exec.mainClass>com.example.Application</exec.mainClass>
     </properties>
 
     <dependencyManagement>
@@ -52,18 +66,58 @@
             <artifactId>apache-client</artifactId>
         </dependency>
 
-
-        <!-- Springboot -->
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>5.3.19</version>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>regions</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-            <version>2.4.2</version>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>auth</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>opensearch</artifactId>
+        </dependency>
+
+        <!-- AWS Security Token Serivce - required to connect to AWS services (Elasticsearch,OpenSearch,etc) using
+             WebIdentityCredentials from the credential providers chain -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sts</artifactId>
+        </dependency>
+
+        <!-- Micronaut -->
+        <dependency>
+            <groupId>io.micronaut.serde</groupId>
+            <artifactId>micronaut-serde-jackson</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut</groupId>
+            <artifactId>micronaut-http-client</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.test</groupId>
+            <artifactId>micronaut-test-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
         </dependency>
 
 
@@ -127,7 +181,6 @@
             <version>${protobuf.version}</version>
         </dependency>
 
-
         <!-- Add IO dependencies here -->
         <dependency>
             <groupId>org.apache.flink</groupId>
@@ -186,17 +239,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-            <version>2.4.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.1</version>
-            <scope>test</scope>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>statefun-flink-state-processor</artifactId>
+            <version>${statefun.version}</version>
         </dependency>
 
         <dependency>
@@ -211,6 +256,16 @@
             <artifactId>flink-test-utils</artifactId>
             <version>${flink.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
@@ -249,11 +304,44 @@
         </extensions>
         <plugins>
             <plugin>
+                <groupId>io.micronaut.maven</groupId>
+                <artifactId>micronaut-maven-plugin</artifactId>
+                <configuration>
+                    <configFile>aot-jar.properties</configFile>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <source>11</source>
                     <target>11</target>
+                    <annotationProcessorPaths combine.children="append">
+                        <path>
+                            <groupId>io.micronaut</groupId>
+                            <artifactId>micronaut-http-validation</artifactId>
+                            <version>${micronaut.core.version}</version>
+                        </path>
+                        <path>
+                            <groupId>io.micronaut.serde</groupId>
+                            <artifactId>micronaut-serde-processor</artifactId>
+                            <version>${micronaut.serialization.version}</version>
+                            <exclusions>
+                                <exclusion>
+                                    <groupId>io.micronaut</groupId>
+                                    <artifactId>micronaut-inject</artifactId>
+                                </exclusion>
+                            </exclusions>
+                        </path>
+                    </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>-Amicronaut.processing.group=com.example</arg>
+                        <arg>-Amicronaut.processing.module=my-stateful-functions-embedded-java</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
